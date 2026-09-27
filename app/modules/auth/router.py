@@ -1,0 +1,34 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+
+from app.api.deps import CurrentUser, DbSession
+from app.modules.auth.schemas import RefreshRequest, TokenPair
+from app.modules.auth.service import AuthService
+from app.modules.users.repository import UserRepository
+from app.modules.users.schemas import UserOut
+
+router = APIRouter()
+
+
+def get_auth_service(db: DbSession) -> AuthService:
+    return AuthService(UserRepository(db))
+
+
+AuthSvc = Annotated[AuthService, Depends(get_auth_service)]
+
+
+@router.post("/login", response_model=TokenPair)
+async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], svc: AuthSvc):
+    return await svc.login(form.username, form.password)  # username = email
+
+
+@router.post("/refresh", response_model=TokenPair)
+async def refresh(body: RefreshRequest, svc: AuthSvc):
+    return await svc.refresh(body.refresh_token)
+
+
+@router.get("/me", response_model=UserOut)
+async def me(user: CurrentUser):
+    return user
