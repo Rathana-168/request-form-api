@@ -52,7 +52,7 @@ class Request(UUIDMixin, TimestampMixin, Base):
         Index("ix_requests_form_status", "form_code", "status"),
     )
 
-    request_no: Mapped[str] = mapped_column(String(30), unique=True)
+    request_no: Mapped[str | None] = mapped_column(String(30), unique=True)
     form_code: Mapped[str] = mapped_column(
         ForeignKey("forms.code", ondelete="RESTRICT", onupdate="CASCADE")
     )
@@ -64,9 +64,9 @@ class Request(UUIDMixin, TimestampMixin, Base):
     )
 
     # Workflow state
-    workflow_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("workflows.id", ondelete="SET NULL")
-    )
+    # workflow_id: Mapped[uuid.UUID | None] = mapped_column(
+    #     ForeignKey("workflows.id", ondelete="SET NULL")
+    # )
     workflow_snapshot: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
     current_step: Mapped[int | None] = mapped_column(Integer)
 

@@ -11,6 +11,7 @@ from app.modules.forms.repository import FormRepository
 from app.modules.forms.schemas import FormCreate, FormUpdate
 from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
+from app.modules.forms.registry import load_plugins
 
 
 class FormService:
@@ -50,12 +51,12 @@ class FormService:
         return Page(items=items, total=total, page=params.page, size=params.size)
 
     async def available_codes(self) -> list[str]:
-        """Codes with a schema in code but no row in the DB yet."""
-        return sorted(set(FORM_SCHEMAS) - await self.repo.list_codes())
+        """Codes with a plugin in code but no row in the DB yet."""
+        return sorted(set(load_plugins()) - await self.repo.list_codes())
 
     async def create(self, data: FormCreate, created_by: User) -> Form:
-        if data.code not in FORM_SCHEMAS:
-            raise UnknownFormError(f"No schema registered for form '{data.code}'")
+        if data.code not in load_plugins():
+            raise UnknownFormError(f"No plugin registered for form '{data.code}'")
         if await self.repo.get_by_code(data.code):
             raise FormCodeExistsError()
         form = Form(**data.model_dump(), created_by_id=created_by.id)

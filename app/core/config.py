@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = []
 
     DATABASE_URL: str
+    DATABASE_SCHEMA: str = "public"
+
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
 

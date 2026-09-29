@@ -12,6 +12,7 @@ engine = create_async_engine(
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_pre_ping=True,
     echo=settings.DEBUG,
+    connect_args={"server_settings": {"search_path": settings.DATABASE_SCHEMA}},
 )
 
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
