@@ -52,3 +52,13 @@ class RequestOut(RequestListItem):
     completed_at: datetime | None
     data: dict[str, Any]  # shaped by the plugin's read_schema
     history: list[HistoryOut]
+    approvals: list[ApprovalOut]
+
+
+class ApprovalOut(ORMModel):
+    id: uuid.UUID
+    step_no: int
+    assignee: UserBrief
+    status: str
+    comment: str | None
+    acted_at: datetime | None

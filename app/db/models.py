@@ -2,7 +2,8 @@
 # e.g. from app.modules.users.models import User  # noqa: F401
 from app.db.base import Base  # noqa: F401
 from app.modules.users.models import Department, Permission, Role, User  # noqa: F401
-from app.modules.forms.models import Form
+from app.modules.approvals.models import ApprovalTask  # noqa: E402,F401
+from app.workflow.models import Workflow, WorkflowStep  # noqa: E402,F401
 
 from app.modules.forms.models import Form  # noqa: F401
 from app.modules.forms.registry import load_plugins

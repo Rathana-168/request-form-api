@@ -64,9 +64,9 @@ class Request(UUIDMixin, TimestampMixin, Base):
     )
 
     # Workflow state
-    # workflow_id: Mapped[uuid.UUID | None] = mapped_column(
-    #     ForeignKey("workflows.id", ondelete="SET NULL")
-    # )
+    workflow_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workflows.id", ondelete="SET NULL")
+    )
     workflow_snapshot: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
     current_step: Mapped[int | None] = mapped_column(Integer)
 

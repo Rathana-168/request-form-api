@@ -84,7 +84,6 @@ class FormHooks:
     """
 
     # --- building the form row (drafts: create and edit) ---
-
     async def build(self, ctx: FormContext, data: BaseModel) -> FormDataMixin:
         """Create the form row from validated create_schema data. The core sets request_id."""
         return build_instance(ctx.definition.model, data.model_dump())
@@ -96,7 +95,6 @@ class FormHooks:
         apply_values(row, data.model_dump(include=fields))
 
     # --- lifecycle ---
-
     async def validate(self, ctx: FormContext, data: Any) -> None:
         """Business rules beyond the schema (overlaps, balances...). Runs on submit."""
 

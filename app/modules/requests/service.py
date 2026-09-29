@@ -27,6 +27,7 @@ from app.modules.requests.schemas import RequestCreate, RequestUpdate
 from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
 from app.workflow import engine
+from app.modules.approvals.repository import ApprovalRepository
 
 CANCELLABLE = {RequestStatus.IN_PROGRESS, RequestStatus.RETURNED}
 
@@ -45,14 +46,23 @@ class RequestService:
         self.db = db
         self.repo = RequestRepository(db)
         self.forms = FormRepository(db)
+        self.approvals = ApprovalRepository(db)
 
     # --- queries ---
 
     async def get_detail(self, request_id: uuid.UUID, user: User) -> dict[str, Any]:
         request = await self._get(request_id)
         can_read_all = user.is_superuser or "request:read_all" in user.permission_codes
-        if request.requester_id != user.id and not can_read_all:
+        if (
+            request.requester_id != user.id
+            and not can_read_all
+            and not await self.approvals.is_assignee(request.id, user.id)
+        ):
             raise RequestNotFoundError()  # don't reveal other people's requests
+        return await self._detail(request)
+
+    async def detail_for(self, request: Request) -> dict[str, Any]:
+        """Response body for a request the caller already has access to."""
         return await self._detail(request)
 
     async def list_mine(
@@ -119,7 +129,7 @@ class RequestService:
             request.request_no = await self.repo.next_request_no(definition.prefix)
         request.status = RequestStatus.IN_PROGRESS
         request.submitted_at = datetime.now(UTC)
-        await engine.start(self.db, request)
+        await engine.start(self.db, request, user)
 
         await self._log(
             request,
@@ -138,6 +148,7 @@ class RequestService:
         row = await self._data(definition, request)
 
         await definition.hooks.on_cancelled(self._ctx(request, user, definition), row)
+        await engine.cancel(self.db, request)
         request.status = RequestStatus.CANCELLED
         request.completed_at = datetime.now(UTC)
         await self._log(request, HistoryAction.CANCELLED, user, comment=comment)
@@ -209,5 +220,6 @@ class RequestService:
                 "submitted_at", "completed_at", "created_at", "updated_at",
             )},
             "data": definition.read_schema.model_validate(row).model_dump(mode="json"),
-            "history": await self.repo.list_history(request.id),
+            "history": await self.repo.list_history(request.id),\
+            "approvals": await self.approvals.for_request(request.id),
         }
