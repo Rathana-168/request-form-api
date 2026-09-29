@@ -69,6 +69,7 @@ class Request(UUIDMixin, TimestampMixin, Base):
     )
     workflow_snapshot: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
     current_step: Mapped[int | None] = mapped_column(Integer)
+    stage: Mapped[str] = mapped_column(String(50), default="draft", server_default="draft")
 
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

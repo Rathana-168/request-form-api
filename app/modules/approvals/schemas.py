@@ -35,6 +35,7 @@ class RequestBrief(ORMModel):
     status: RequestStatus
     requester: UserBrief
     submitted_at: datetime | None
+    stage: str
 
 
 class InboxItem(ORMModel):

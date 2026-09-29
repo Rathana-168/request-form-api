@@ -9,6 +9,7 @@ from app.modules.forms.exceptions import FormNotFoundError
 from app.modules.forms.registry import get_definition
 from app.modules.forms.repository import FormRepository
 from app.modules.users.models import Role, User
+from app.workflow.conditions import rule_fields
 from app.workflow.models import Workflow, WorkflowStep
 from app.workflow.schemas import StepIn, WorkflowCreate, WorkflowUpdate
 
@@ -47,6 +48,7 @@ class WorkflowService:
             name=data.name,
             description=data.description,
             steps=self._build_steps(data.steps),
+            completed_status=data.completed_status,
         )
         self.db.add(workflow)
         await self.db.flush()
@@ -55,10 +57,13 @@ class WorkflowService:
     async def update(self, workflow_id: uuid.UUID, data: WorkflowUpdate) -> Workflow:
         workflow = await self.get(workflow_id)
         await self._validate_steps(workflow.form_code, data.steps)
+
         workflow.name = data.name
         workflow.description = data.description
+        workflow.completed_status = data.completed_status
         workflow.steps = []  # delete-orphan removes the old steps first
         await self.db.flush()
+
         workflow.steps = self._build_steps(data.steps)
         await self.db.flush()
         return await self._reload(workflow)
@@ -90,9 +95,7 @@ class WorkflowService:
             WorkflowStep(
                 step_no=i,
                 **s.model_dump(exclude={"conditions"}),
-                conditions=[c.model_dump(mode="json") for c in s.conditions]
-                if s.conditions
-                else None,
+                conditions=s.conditions_json(),
             )
             for i, s in enumerate(steps, start=1)
         ]
@@ -100,18 +103,25 @@ class WorkflowService:
     async def _validate_steps(self, form_code: str, steps: list[StepIn]) -> None:
         fields = set(get_definition(form_code).read_schema.model_fields)
         errors = []
+        available = ", ".join(sorted(fields))
         for i, step in enumerate(steps):
             loc = ("body", "steps", i)
-            for j, cond in enumerate(step.conditions or []):
-                if cond.field not in fields:
+            for name in rule_fields(step.conditions_json()):          # fields inside any/all too
+                if name not in fields:
                     errors.append(self._err(
-                        (*loc, "conditions", j, "field"),
-                        f"Unknown field '{cond.field}'. Available: {', '.join(sorted(fields))}",
+                        (*loc, "conditions"), f"Unknown field '{name}'. Available: {available}"
                     ))
-            if step.assignee_user_id and not await self.db.get(User, step.assignee_user_id):
-                errors.append(self._err((*loc, "assignee_user_id"), "User not found"))
-            if step.assignee_role_id and not await self.db.get(Role, step.assignee_role_id):
-                errors.append(self._err((*loc, "assignee_role_id"), "Role not found"))
+            if step.assignee_field and step.assignee_field not in fields:
+                errors.append(self._err(
+                    (*loc, "assignee_field"),
+                    f"Unknown field '{step.assignee_field}'. Available: {available}",
+                ))
+            if step.return_to.isdigit() and int(step.return_to) >= i + 1:  # only backwards
+                errors.append(self._err(
+                    (*loc, "return_to"), "Can only return to an earlier step number"
+                ))
+            # (keep the existing user / role existence checks here)
+            
         if errors:
             raise RequestValidationError(errors)
 

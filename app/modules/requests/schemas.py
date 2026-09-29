@@ -46,6 +46,14 @@ class RequestListItem(ORMModel):
     submitted_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    stage: str  # workflow's display status: submitted, reviewed, done...
+
+
+class ActionOut(BaseModel):
+    key: str  # edit | submit | delete | cancel | approve | return | reject
+    label: str
+    task_id: uuid.UUID | None  # set for approver actions: POST /approvals/{task_id}/{key}
+    require_comment: bool
 
 
 class RequestOut(RequestListItem):
@@ -53,6 +61,7 @@ class RequestOut(RequestListItem):
     data: dict[str, Any]  # shaped by the plugin's read_schema
     history: list[HistoryOut]
     approvals: list[ApprovalOut]
+    available_actions: list[ActionOut]  # for the current user
 
 
 class ApprovalOut(ORMModel):

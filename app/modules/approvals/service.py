@@ -30,7 +30,7 @@ class ApprovalService:
             {
                 "id": task.id,
                 "step_no": task.step_no,
-                "step_name": request.workflow_snapshot[task.step_no - 1]["name"],
+                "step_name": engine.steps_of(request)[task.step_no - 1]["name"],
                 "created_at": task.created_at,
                 "request": request,
             }
@@ -45,7 +45,7 @@ class ApprovalService:
         return await self._act(task_id, user, comment, engine.reject)
 
     async def return_(self, task_id: uuid.UUID, user: User, comment: str | None) -> Request:
-        return await self._act(task_id, user, comment, engine.return_to_requester)
+        return await self._act(task_id, user, comment, engine.return_back)
 
     async def _act(
         self, task_id: uuid.UUID, user: User, comment: str | None, action: Action

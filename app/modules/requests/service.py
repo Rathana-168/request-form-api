@@ -59,11 +59,11 @@ class RequestService:
             and not await self.approvals.is_assignee(request.id, user.id)
         ):
             raise RequestNotFoundError()  # don't reveal other people's requests
-        return await self._detail(request)
+        return await self._detail(request, user=user)
 
-    async def detail_for(self, request: Request) -> dict[str, Any]:
+    async def detail_for(self, request: Request, user: User) -> dict[str, Any]:
         """Response body for a request the caller already has access to."""
-        return await self._detail(request)
+        return await self._detail(request, user=user)
 
     async def list_mine(
         self,
@@ -95,7 +95,7 @@ class RequestService:
         await self.repo.add_data(row)
 
         await self._log(request, HistoryAction.CREATED, user)
-        return await self._detail(request, definition)
+        return await self._detail(request, definition, user)
 
     async def update(
         self, request_id: uuid.UUID, payload: RequestUpdate, user: User
@@ -112,7 +112,7 @@ class RequestService:
         ctx = self._ctx(request, user, definition)
         await definition.hooks.apply_update(ctx, row, full, set(changes))
         await self.db.flush()
-        return await self._detail(request, definition)
+        return await self._detail(request, definition, user)
 
     async def submit(self, request_id: uuid.UUID, user: User) -> dict[str, Any]:
         request = await self._get_own(request_id, user, for_update=True)
@@ -137,7 +137,7 @@ class RequestService:
             user,
             snapshot=definition.read_schema.model_validate(row).model_dump(mode="json"),
         )
-        return await self._detail(request, definition)
+        return await self._detail(request, definition, user)
 
     async def cancel(
         self, request_id: uuid.UUID, user: User, comment: str | None
@@ -152,7 +152,7 @@ class RequestService:
         request.status = RequestStatus.CANCELLED
         request.completed_at = datetime.now(UTC)
         await self._log(request, HistoryAction.CANCELLED, user, comment=comment)
-        return await self._detail(request, definition)
+        return await self._detail(request, definition, user)
 
     async def delete_draft(self, request_id: uuid.UUID, user: User) -> None:
         request = await self._get_own(request_id, user, for_update=True)
@@ -209,7 +209,7 @@ class RequestService:
         )
 
     async def _detail(
-        self, request: Request, definition: FormDefinition | None = None
+        self, request: Request, definition: FormDefinition | None = None, user: User | None = None
     ) -> dict[str, Any]:
         definition = definition or get_definition(request.form_code)
         await self.db.refresh(request)  # pick up server-side updated_at
@@ -217,9 +217,10 @@ class RequestService:
         return {
             **{c: getattr(request, c) for c in (
                 "id", "request_no", "form_code", "status", "requester", "current_step",
-                "submitted_at", "completed_at", "created_at", "updated_at",
+                "submitted_at", "completed_at", "created_at", "updated_at", "stage"
             )},
             "data": definition.read_schema.model_validate(row).model_dump(mode="json"),
             "history": await self.repo.list_history(request.id),\
             "approvals": await self.approvals.for_request(request.id),
+            "available_actions": await engine.available_actions(self.db, request, user) if user else [],
         }

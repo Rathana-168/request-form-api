@@ -36,18 +36,18 @@ async def inbox(
 @router.post("/{task_id}/approve", response_model=RequestOut)
 async def approve(task_id: uuid.UUID, payload: ApprovalAction, user: Approver, svcs: Services):
     request = await svcs[0].approve(task_id, user, payload.comment)
-    return await svcs[1].detail_for(request)
+    return await svcs[1].detail_for(request, user)
 
 
 @router.post("/{task_id}/reject", response_model=RequestOut)
 async def reject(task_id: uuid.UUID, payload: ApprovalAction, user: Approver, svcs: Services):
     request = await svcs[0].reject(task_id, user, payload.comment)
-    return await svcs[1].detail_for(request)
+    return await svcs[1].detail_for(request, user)
 
 
 @router.post("/{task_id}/return", response_model=RequestOut)
-async def return_to_requester(
+async def return_back(
     task_id: uuid.UUID, payload: ApprovalAction, user: Approver, svcs: Services
 ):
     request = await svcs[0].return_(task_id, user, payload.comment)
-    return await svcs[1].detail_for(request)
+    return await svcs[1].detail_for(request, user)

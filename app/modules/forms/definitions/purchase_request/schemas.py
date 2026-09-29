@@ -14,11 +14,13 @@ class ItemIn(BaseModel):
 
 class PurchaseCreate(BaseModel):
     supplier: str = Field(min_length=1, max_length=150)
+    approver_id: uuid.UUID
     items: list[ItemIn] = Field(min_length=1)
 
 
 class PurchaseUpdate(BaseModel):
     supplier: str | None = Field(None, min_length=1, max_length=150)
+    approver_id: uuid.UUID | None = None
     items: list[ItemIn] | None = Field(None, min_length=1)  # full list when sent
 
 
@@ -34,4 +36,5 @@ class PurchaseOut(ORMModel):
     id: uuid.UUID
     supplier: str
     total: Decimal
+    approver_id: uuid.UUID
     items: list[ItemOut]
