@@ -24,6 +24,7 @@ class RequestAction(BaseModel):
 class UserBrief(ORMModel):
     id: uuid.UUID
     full_name: str
+    staff_id: str
 
 
 class HistoryOut(ORMModel):
@@ -56,12 +57,18 @@ class ActionOut(BaseModel):
     require_comment: bool
 
 
+class ApprovalStepOut(BaseModel):
+    order: int
+    label: str
+
+
 class RequestOut(RequestListItem):
     completed_at: datetime | None
     data: dict[str, Any]  # shaped by the plugin's read_schema
     history: list[HistoryOut]
     approvals: list[ApprovalOut]
     available_actions: list[ActionOut]  # for the current user
+    approval_steps: list[ApprovalStepOut] = []
 
 
 class ApprovalOut(ORMModel):

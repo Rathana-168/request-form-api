@@ -22,11 +22,10 @@ class Page[T](BaseModel):
 
 
 class APIResponse[T](BaseModel):
-    status_code: int
-    title: str | None
-    message: str | None
-    data: T
+    success: bool = True
+    message: str | None = "success"
+    data: T | None = None
 
-    @classmethod
-    def success(cls, data: T):
-        return cls(status_code=200, title=None, message="success", data=data)
+
+def ok[T](data: T, message: str = "success") -> APIResponse[T]:
+    return APIResponse(data=data, message=message)

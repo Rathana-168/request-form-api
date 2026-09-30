@@ -223,4 +223,5 @@ class RequestService:
             "history": await self.repo.list_history(request.id),\
             "approvals": await self.approvals.for_request(request.id),
             "available_actions": await engine.available_actions(self.db, request, user) if user else [],
+            "approval_steps": [{"order": s["step_no"], "label": s["name"]} for s in engine.steps_of(request)],
         }

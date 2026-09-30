@@ -14,7 +14,7 @@ from app.modules.requests.schemas import (
 )
 from app.modules.requests.service import RequestService
 from app.modules.users.models import User
-from app.shared.schemas import Page, PageParams
+from app.shared.schemas import APIResponse, Page, PageParams, ok
 
 router = APIRouter()
 
@@ -38,33 +38,33 @@ async def list_my_requests(
     return await svc.list_mine(user, params, status=status, form_code=form_code)
 
 
-@router.post("", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=APIResponse[RequestOut], status_code=status.HTTP_201_CREATED)
 async def create_draft(payload: RequestCreate, user: Requester, svc: RequestSvc):
-    return await svc.create_draft(payload, user)
+    return ok(await svc.create_draft(payload, user))
 
 
-@router.get("/{request_id}", response_model=RequestOut)
+@router.get("/{request_id}", response_model=APIResponse[RequestOut])
 async def get_request(request_id: uuid.UUID, user: Requester, svc: RequestSvc):
-    return await svc.get_detail(request_id, user)
+    return ok(await svc.get_detail(request_id, user))
 
 
-@router.patch("/{request_id}", response_model=RequestOut)
+@router.patch("/{request_id}", response_model=APIResponse[RequestOut])
 async def update_request(
     request_id: uuid.UUID, payload: RequestUpdate, user: Requester, svc: RequestSvc
 ):
-    return await svc.update(request_id, payload, user)
+    return ok(await svc.update(request_id, payload, user))
 
 
-@router.post("/{request_id}/submit", response_model=RequestOut)
+@router.post("/{request_id}/submit", response_model=APIResponse[RequestOut])
 async def submit_request(request_id: uuid.UUID, user: Requester, svc: RequestSvc):
-    return await svc.submit(request_id, user)
+    return ok(await svc.submit(request_id, user))
 
 
-@router.post("/{request_id}/cancel", response_model=RequestOut)
+@router.post("/{request_id}/cancel", response_model=APIResponse[RequestOut])
 async def cancel_request(
     request_id: uuid.UUID, payload: RequestAction, user: Requester, svc: RequestSvc
 ):
-    return await svc.cancel(request_id, user, payload.comment)
+    return ok(await svc.cancel(request_id, user, payload.comment))
 
 
 @router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -7,7 +7,7 @@ from app.api.deps import DbSession, require_permission
 from app.modules.users.repository import UserRepository
 from app.modules.users.schemas import UserCreate, UserOut, UserUpdate
 from app.modules.users.service import UserService
-from app.shared.schemas import APIResponse, Page, PageParams
+from app.shared.schemas import APIResponse, Page, PageParams, ok
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ async def list_users(
     params: Annotated[PageParams, Depends()],
     search: Annotated[str | None, Query(max_length=100)] = None,
 ):
-    return APIResponse.success(await svc.list(params, search))
+    return ok(await svc.list(params, search))
 
 
 @router.get(

@@ -62,6 +62,7 @@ class Department(UUIDMixin, TimestampMixin, Base):
 class User(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "users"
 
+    staff_id: Mapped[str | None] = mapped_column(String(10), index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(150))

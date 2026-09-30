@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str
     CORS_ORIGINS: list[str] = []
+    CIF_LOOKUP_FIELD: str = 'staff_id'
 
     DATABASE_URL: str
     DATABASE_SCHEMA: str = "public"

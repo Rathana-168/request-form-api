@@ -110,6 +110,11 @@ class FormHooks:
 
     async def on_cancelled(self, ctx: FormContext, data: Any) -> None: ...
 
+    async def on_step_approved(self, ctx: FormContext, data: Any, step: dict) -> None:
+        """One step completed with approval. step["step_no"], step["name"] tell which."""
+
+    async def on_step_rejected(self, ctx: FormContext, data: Any, step: dict) -> None: ...
+
 
 @dataclass(frozen=True)
 class FormDefinition:

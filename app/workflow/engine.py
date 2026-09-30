@@ -10,8 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.approvals.models import ApprovalTask, TaskStatus
-from app.modules.forms.plugin import FormContext, FormDataMixin, FormDefinition
-from app.modules.forms.registry import get_definition
+from app.modules.forms.data import load_form_row
 from app.modules.requests.models import (
     HistoryAction,
     Request,
@@ -20,6 +19,7 @@ from app.modules.requests.models import (
 )
 from app.modules.users.models import Department, User, user_roles
 from app.workflow.conditions import matches
+from app.workflow.events import Event, dispatch
 from app.workflow.models import AssigneeType, Workflow
 
 
@@ -90,17 +90,23 @@ async def approve(db: AsyncSession, request: Request, task: ApprovalTask, actor:
         await _close_open_tasks(db, request, step_no=task.step_no)
     elif await _has_open_tasks(db, request, step_no=task.step_no):
         return  # "all" mode: wait for the others
+
+    # Hook to event on step action
+    await dispatch(db, Event.STEP_APPROVED, request, actor, step=step)
     await _open_step(db, request, task.step_no + 1, actor)
 
 
 async def reject(db: AsyncSession, request: Request, task: ApprovalTask, actor: User,
                  comment: str | None) -> None:
-    _check(_step(request, task.step_no), "reject", comment)
+    step = _step(request, task.step_no)
+    _check(step, "reject", comment)
     _close_task(task, TaskStatus.REJECTED, comment)
+
     await _close_open_tasks(db, request)
+    await dispatch(db, Event.STEP_REJECTED, request, actor, step=step)
+    await dispatch(db, Event.STEP_REJECTED, request, actor)
     await _finish(db, request, RequestStatus.REJECTED, stage="rejected")
     await _log(db, request, HistoryAction.REJECTED, actor, task.step_no, comment)
-    await _run_hook(db, request, actor, "on_rejected")
 
 
 async def return_back(db: AsyncSession, request: Request, task: ApprovalTask,
@@ -117,7 +123,7 @@ async def return_back(db: AsyncSession, request: Request, task: ApprovalTask,
         request.status = RequestStatus.RETURNED
         request.current_step = None
         request.stage = "returned"
-        await _run_hook(db, request, actor, "on_returned")
+        await dispatch(db, Event.RETURNED, request, actor)
     else:
         await _open_step(db, request, target, actor)   # same function submit uses
 
@@ -209,7 +215,7 @@ async def _open_step(db: AsyncSession, request: Request, step_no: int, actor: Us
     # Past the last step: done
     await _finish(db, request, RequestStatus.APPROVED, stage=_completed_status(request))
     await _log(db, request, HistoryAction.COMPLETED, None, None, None)
-    await _run_hook(db, request, actor, "on_approved")
+    await dispatch(db, Event.APPROVED, request, actor)
 
 
 async def _resolve_approvers(db: AsyncSession, request: Request,
@@ -295,23 +301,9 @@ async def _finish(db: AsyncSession, request: Request, status: RequestStatus,
     request.completed_at = datetime.now(UTC)
 
 
-async def _form_row(db: AsyncSession, request: Request) -> tuple[FormDefinition, FormDataMixin]:
-    from app.modules.requests.repository import RequestRepository  # avoid import cycle
-
-    definition = get_definition(request.form_code)
-    row = await RequestRepository(db).get_data(definition.model, request.id)
-    return definition, row
-
-
 async def _form_data(db: AsyncSession, request: Request) -> dict[str, Any]:
-    definition, row = await _form_row(db, request)
+    definition, row = await load_form_row(db, request)
     return definition.read_schema.model_validate(row).model_dump()
-
-
-async def _run_hook(db: AsyncSession, request: Request, actor: User, name: str) -> None:
-    definition, row = await _form_row(db, request)
-    ctx = FormContext(db=db, request=request, user=actor, definition=definition)
-    await getattr(definition.hooks, name)(ctx, row)
 
 
 async def _log(db: AsyncSession, request: Request, action: HistoryAction, actor: User | None,
