@@ -10,6 +10,7 @@ from app.modules.forms.exceptions import FormInactiveError, FormNotFoundError
 from app.modules.forms.plugin import FormContext, FormDataMixin, FormDefinition
 from app.modules.forms.registry import get_definition
 from app.modules.forms.repository import FormRepository
+from app.modules.requests.access import can_view_request
 from app.modules.requests.exceptions import (
     InvalidRequestStatusError,
     NotRequesterError,
@@ -53,7 +54,7 @@ class RequestService:
 
     async def get_detail(self, request_id: uuid.UUID, user: User) -> dict[str, Any]:
         request = await self._get(request_id)
-        if not await self._can_view(request, user):
+        if not await can_view_request(self.db, request, user):
             raise RequestNotFoundError()  # don't reveal other people's requests
         return await self._detail(request, user=user)
 
@@ -221,12 +222,3 @@ class RequestService:
             "available_actions": await engine.available_actions(self.db, request, user) if user else [],
             "approval_steps": [{"order": s["step_no"], "label": s["name"]} for s in engine.steps_of(request)],
         }
-
-    async def _can_view(self, request: Request, user: User) -> bool:
-        if request.requester_id == user.id:
-            return True
-        if user.is_superuser or "request:read_all" in user.permission_codes:
-            return True
-        # approver, active proxy of an approver, or someone who acted on it
-        principals = await self.proxies.principals_of(user.id, datetime.now(UTC))
-        return await self.approvals.can_view(request.id, [user.id, *principals])
