@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.shared.schemas import ORMModel
 from app.workflow.models import ApprovalMode, AssigneeType
+from app.workflow.enums import EscalationAction
 
 Op = Literal["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in"]
 Action = Literal["reject", "return"]
@@ -114,6 +115,16 @@ class StepOut(ORMModel):
     allow_return: bool
     return_to: str
     require_comment_on: list[str]
+    remind_after_hours: int | None = Field(None, ge=1)
+    escalate_after_hours: int | None = Field(None, ge=1)
+    escalation_action: EscalationAction = EscalationAction.NOTIFY_MANAGER
+
+    @model_validator(mode="after")
+    def check_sla(self) -> Self:
+        r, e = self.remind_after_hours, self.escalate_after_hours
+        if r and e and e <= r:
+            raise ValueError("escalate_after_hours must be greater than remind_after_hours")
+        return self
 
 
 class WorkflowOut(ORMModel):

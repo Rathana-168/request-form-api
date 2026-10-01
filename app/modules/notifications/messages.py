@@ -14,4 +14,11 @@ MESSAGES: dict[WorkflowEvent, tuple[NotificationType, str, str | None]] = {
                      "{no} was returned", "Returned by {actor} for changes. {comment}"),
     WorkflowEvent.CANCELLED: (NotificationType.CANCELLED,
                       "{no} was cancelled", "{requester} cancelled this request."),
+    
+    WorkflowEvent.TASK_REMINDER: (NotificationType.TASK_REMINDER,
+        "{no} is still waiting for your approval", "{form} from {requester} ({step})"),
+    WorkflowEvent.TASK_ESCALATED: (NotificationType.TASK_ESCALATED,
+        "{no} is overdue", "{form} from {requester} has waited {hours}h for {approver} ({step})."),
+    WorkflowEvent.TASK_REASSIGNED: (NotificationType.TASK_REASSIGNED,
+        "{no} was reassigned", "Overdue with {approver} after {hours}h, now assigned to their manager ({step})."),
 }

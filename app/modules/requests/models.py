@@ -41,6 +41,10 @@ class HistoryAction(StrEnum):
     RETURNED = "returned"
     CANCELLED = "cancelled"
     COMPLETED = "completed"  # all steps approved
+    
+    REMINDED = "reminded"
+    ESCALATED = "escalated"
+    REASSIGNED = "reassigned"
 
 
 class Request(UUIDMixin, TimestampMixin, Base):

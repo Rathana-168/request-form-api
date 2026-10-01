@@ -1,27 +1,44 @@
+from datetime import datetime
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.approvals.models import ApprovalTask, TaskStatus
+from app.modules.approvals.models import ApprovalProxy, ApprovalTask, TaskStatus
 from app.modules.requests.models import Request
 
 
 class ApprovalRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.proxies = ApprovalProxyRepository(db)
 
     async def get(self, task_id: uuid.UUID) -> ApprovalTask | None:
         return await self.db.get(ApprovalTask, task_id)
 
     async def inbox(
-        self, user_id: uuid.UUID, *, offset: int, limit: int, form_code: str | None
+        self,
+        user_id: uuid.UUID,
+        *,
+        acting_ids: list[uuid.UUID],
+        offset: int,
+        limit: int,
+        form_code: str | None,
     ) -> tuple[list[tuple[ApprovalTask, Request]], int]:
         stmt = (
             select(ApprovalTask, Request)
             .join(Request, Request.id == ApprovalTask.request_id)
-            .where(ApprovalTask.assignee_id == user_id, ApprovalTask.status == TaskStatus.PENDING)
+            .where(
+                ApprovalTask.status == TaskStatus.PENDING,
+                # as a proxy, never show your own request
+                or_(ApprovalTask.assignee_id == user_id, Request.requester_id != user_id),
+            )
         )
+        if len(acting_ids) > 1:  # acting as a proxy for someone
+            # never show the proxy their own request through someone else's task
+            stmt = stmt.where(
+                or_(ApprovalTask.assignee_id == user_id, Request.requester_id != user_id)
+            )
         if form_code:
             stmt = stmt.where(Request.form_code == form_code)
         total = await self.db.scalar(select(func.count()).select_from(stmt.subquery()))
@@ -45,3 +62,50 @@ class ApprovalRepository:
             .limit(1)
         )
         return found is not None
+
+
+def _active_at(now: datetime):
+    return and_(
+        ApprovalProxy.ended_at.is_(None),
+        ApprovalProxy.start_at <= now,
+        ApprovalProxy.end_at > now,
+    )
+
+
+class ApprovalProxyRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    def add(self, proxy: ApprovalProxy) -> None:
+        self.db.add(proxy)
+
+    async def principals_of(self, proxy_id: uuid.UUID, now: datetime) -> list[uuid.UUID]:
+        """People whose tasks this user may currently act on."""
+        rows = await self.db.scalars(
+            select(ApprovalProxy.principal_id).where(
+                ApprovalProxy.proxy_id == proxy_id, _active_at(now)
+            )
+        )
+        return list(rows)
+
+    async def proxies_of(self, principal_id: uuid.UUID, now: datetime) -> list[uuid.UUID]:
+        """People who may currently act on this user's tasks."""
+        rows = await self.db.scalars(
+            select(ApprovalProxy.proxy_id).where(
+                ApprovalProxy.principal_id == principal_id, _active_at(now)
+            )
+        )
+        return list(rows)
+
+    async def can_act_for(
+        self, proxy_id: uuid.UUID, principal_id: uuid.UUID, now: datetime
+    ) -> bool:
+        found = await self.db.scalar(
+            select(ApprovalProxy.id).where(
+                ApprovalProxy.proxy_id == proxy_id,
+                ApprovalProxy.principal_id == principal_id,
+                _active_at(now),
+            ).limit(1)
+        )
+        return found is not None
+    

@@ -78,3 +78,6 @@ class ApprovalOut(ORMModel):
     status: str
     comment: str | None
     acted_at: datetime | None
+    remind_at: datetime | None
+    escalate_at: datetime | None
+    escalated_at: datetime | None

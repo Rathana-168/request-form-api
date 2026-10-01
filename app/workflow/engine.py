@@ -1,7 +1,7 @@
 """Workflow runtime. Every status change of an in-progress request happens here."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import status
@@ -51,11 +51,19 @@ class CommentRequiredError(AppException):
 STEP_FIELDS = (
     "step_no", "name", "status", "action_label", "assignee_type", "assignee_field", "mode",
     "conditions", "skip_if_requester", "allow_reject", "allow_return", "return_to",
-    "require_comment_on",
+    "require_comment_on", "remind_after_hours", "escalate_after_hours", "escalation_action",
 )
 
-# --- entry points -------------------------------------------------------------
+STEP_DEFAULTS = {
+    "status": "in_review", "action_label": "Approve", "assignee_field": None,
+    "allow_reject": True, "allow_return": True, "return_to": "requester",
+    "require_comment_on": [],
+    "remind_after_hours": None,
+    "escalate_after_hours": None,
+    "escalation_action": "notify_manager",
+}
 
+# --- entry points -------------------------------------------------------------
 
 async def start(db: AsyncSession, request: Request, actor: User) -> None:
     """Submit / resubmit: snapshot the active workflow and open step 1."""
@@ -173,11 +181,17 @@ async def available_actions(db: AsyncSession, request: Request, user: User) -> l
     return actions
 
 # --- internals ----------------------------------------------------------------
-STEP_DEFAULTS = {
-    "status": "in_review", "action_label": "Approve", "assignee_field": None,
-    "allow_reject": True, "allow_return": True, "return_to": "requester",
-    "require_comment_on": [],
-}
+
+def sla_deadlines(
+    step: dict[str, Any], start: datetime
+) -> tuple[datetime | None, datetime | None]:
+    """When to remind and escalate a task that opens at `start`. None = never."""
+    remind = step.get("remind_after_hours")
+    escalate = step.get("escalate_after_hours")
+    return (
+        start + timedelta(hours=remind) if remind else None,
+        start + timedelta(hours=escalate) if escalate else None,
+    )
 
 
 def steps_of(request: Request) -> list[dict[str, Any]]:
@@ -214,8 +228,15 @@ async def _open_step(db: AsyncSession, request: Request, step_no: int, actor: Us
         request.stage = step["status"]
 
         # Add approval task for next approver
+        remind_at, escalate_at = sla_deadlines(step, datetime.now(UTC))
         db.add_all(
-            ApprovalTask(request_id=request.id, step_no=step_no, assignee_id=uid)
+            ApprovalTask(
+                request_id=request.id, 
+                step_no=step_no, 
+                assignee_id=uid,
+                remind_at=remind_at,
+                escalate_at=escalate_at
+            )
             for uid in approvers
         )
         await db.flush()

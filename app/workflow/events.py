@@ -30,6 +30,7 @@ async def dispatch(
     *, step: dict[str, Any] | None = None,
     user_ids: list[uuid.UUID] | None = None,   # NEW: approvers, for assigned / cancelled
     comment: str | None = None,                # NEW: for rejected / returned
+    extra: dict[str, str] | None = None,   # NEW: extra template values
 ) -> None:
     # 1. Plugin hook (unchanged, but skip events without one)
     if hook_name := HOOKS.get(event):
@@ -41,7 +42,7 @@ async def dispatch(
     # 2. Notifications
     recipients = user_ids if user_ids is not None else [request.requester_id]
     NotificationService(NotificationRepository(db)).create_for_event(
-        event, request, actor, recipients, step=step, comment=comment
+        event, request, actor, recipients, step=step, comment=comment, extra=extra
     )
 
     # Later: rules

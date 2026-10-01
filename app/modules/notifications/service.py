@@ -29,7 +29,7 @@ class NotificationService:
 
     def create_for_event(
         self, event: WorkflowEvent, request: Request, actor: User, user_ids: list[uuid.UUID],
-        *, step: dict | None = None, comment: str | None = None,
+        *, step: dict | None = None, comment: str | None = None, extra: dict[str, str] | None = None,
     ) -> None:
         template = MESSAGES.get(event)
         recipients = {uid for uid in user_ids if uid != actor.id}  # don't notify yourself
@@ -44,6 +44,7 @@ class NotificationService:
             "actor": actor.full_name,
             "step": step["name"] if step else "",
             "comment": comment or "",
+            **(extra or {}),
         }
         self.repo.add_many([
             Notification(

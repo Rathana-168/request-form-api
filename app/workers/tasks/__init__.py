@@ -1,0 +1,1 @@
+import app.db.models  # noqa: F401  (register all tables, as the API does)

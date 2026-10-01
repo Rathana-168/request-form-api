@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.mixins import TimestampMixin, UUIDMixin
 from app.db.types import str_enum
-
+from app.workflow.enums import EscalationAction
 
 class AssigneeType(StrEnum):
     USER = "user"  # one specific user (assignee_user_id)
@@ -84,4 +84,12 @@ class WorkflowStep(UUIDMixin, Base):
     return_to: Mapped[str] = mapped_column(String(20), default="requester", server_default="requester")
     require_comment_on: Mapped[list[str]] = mapped_column(
         JSONB, default=list, server_default=text("'[]'::jsonb")
+    )
+
+    remind_after_hours: Mapped[int | None] = mapped_column(Integer)
+    escalate_after_hours: Mapped[int | None] = mapped_column(Integer)
+    escalation_action: Mapped[EscalationAction] = mapped_column(
+        str_enum(EscalationAction),
+        default=EscalationAction.NOTIFY_MANAGER,
+        server_default=EscalationAction.NOTIFY_MANAGER.value,
     )

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.approvals.exceptions import TaskNotActionableError, TaskNotFoundError
 from app.modules.approvals.models import ApprovalTask, TaskStatus
-from app.modules.approvals.repository import ApprovalRepository
+from app.modules.approvals.repository import ApprovalProxyRepository, ApprovalRepository
 from app.modules.requests.models import Request, RequestStatus
 from app.modules.requests.repository import RequestRepository
 from app.modules.users.models import User
@@ -23,8 +24,12 @@ class ApprovalService:
         self.requests = RequestRepository(db)
 
     async def inbox(self, user: User, params: PageParams, form_code: str | None) -> Page:
-        rows, total = await self.repo.inbox(
-            user.id, offset=params.offset, limit=params.size, form_code=form_code
+        rows, total = await self.repo. inbox(
+            user.id, 
+            offset=params.offset, 
+            limit=params.size, 
+            form_code=form_code, 
+            acting_ids=await self._acting_user_ids(self.db, user, datetime.now(UTC))
         )
         items: list[dict[str, Any]] = [
             {
@@ -66,3 +71,7 @@ class ApprovalService:
         await action(self.db, request, task, user, comment)
         await self.db.flush()
         return request
+
+    async def _acting_user_ids(self, user: User, now: datetime) -> list[uuid.UUID]:
+        """The user themself, plus everyone they're currently proxy for."""
+        return [user.id, *await self.repo.proxies.principals_of(user.id, now)]

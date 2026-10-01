@@ -17,6 +17,10 @@ class NotificationType(StrEnum):
     RETURNED = "returned"
     CANCELLED = "cancelled"
 
+    TASK_REMINDER = "task_reminder"
+    TASK_ESCALATED = "task_escalated"
+    TASK_REASSIGNED = "task_reassigned"
+
 
 class Notification(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "notifications"
