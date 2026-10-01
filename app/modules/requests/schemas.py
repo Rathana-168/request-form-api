@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.modules.requests.models import HistoryAction, RequestStatus
+from app.modules.users.schemas import UserBrief
 from app.shared.schemas import ORMModel
 
 
@@ -19,12 +20,6 @@ class RequestUpdate(BaseModel):
 
 class RequestAction(BaseModel):
     comment: str | None = Field(None, max_length=2000)
-
-
-class UserBrief(ORMModel):
-    id: uuid.UUID
-    full_name: str
-    staff_id: str
 
 
 class HistoryOut(ORMModel):

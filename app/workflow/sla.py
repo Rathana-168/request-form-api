@@ -61,10 +61,8 @@ async def process_task(db: AsyncSession, task_id: uuid.UUID, now: datetime) -> s
 async def remind(db: AsyncSession, task: ApprovalTask, now: datetime) -> None:
     request, step = await _load(db, task)
     _history(db, request, HistoryAction.REMINDED, step, "Reminder sent to approver")
-    await dispatch(
-        db, WorkflowEvent.TASK_REMINDER, request, None,
-        step=step, user_ids=[task.assignee_id],
-    )
+    user_ids = [task.assignee_id, *await engine.proxy_ids_for(db, task.assignee_id, request)]
+    await dispatch(db, WorkflowEvent.TASK_REMINDER, request, None, step=step, user_ids=user_ids)
 
 
 async def escalate(db: AsyncSession, task: ApprovalTask, now: datetime) -> None:

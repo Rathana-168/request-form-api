@@ -27,7 +27,7 @@ from app.modules.requests.schemas import RequestCreate, RequestUpdate
 from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
 from app.workflow import engine
-from app.modules.approvals.repository import ApprovalRepository
+from app.modules.approvals.repository import ApprovalProxyRepository, ApprovalRepository
 
 CANCELLABLE = {RequestStatus.IN_PROGRESS, RequestStatus.RETURNED}
 
@@ -47,17 +47,13 @@ class RequestService:
         self.repo = RequestRepository(db)
         self.forms = FormRepository(db)
         self.approvals = ApprovalRepository(db)
+        self.proxies = ApprovalProxyRepository(db)
 
     # --- queries ---
 
     async def get_detail(self, request_id: uuid.UUID, user: User) -> dict[str, Any]:
         request = await self._get(request_id)
-        can_read_all = user.is_superuser or "request:read_all" in user.permission_codes
-        if (
-            request.requester_id != user.id
-            and not can_read_all
-            and not await self.approvals.is_assignee(request.id, user.id)
-        ):
+        if not await self._can_view(request, user):
             raise RequestNotFoundError()  # don't reveal other people's requests
         return await self._detail(request, user=user)
 
@@ -225,3 +221,12 @@ class RequestService:
             "available_actions": await engine.available_actions(self.db, request, user) if user else [],
             "approval_steps": [{"order": s["step_no"], "label": s["name"]} for s in engine.steps_of(request)],
         }
+
+    async def _can_view(self, request: Request, user: User) -> bool:
+        if request.requester_id == user.id:
+            return True
+        if user.is_superuser or "request:read_all" in user.permission_codes:
+            return True
+        # approver, active proxy of an approver, or someone who acted on it
+        principals = await self.proxies.principals_of(user.id, datetime.now(UTC))
+        return await self.approvals.can_view(request.id, [user.id, *principals])

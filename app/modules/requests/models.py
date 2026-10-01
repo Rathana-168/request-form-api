@@ -104,8 +104,11 @@ class RequestHistory(UUIDMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
-
     actor: Mapped[User | None] = relationship(foreign_keys=[actor_id], lazy="selectin")
+    on_behalf_of_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    on_behalf_of: Mapped[User | None] = relationship(foreign_keys=[on_behalf_of_id], lazy="selectin")
 
 
 class RequestCounter(Base):

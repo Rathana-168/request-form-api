@@ -20,6 +20,8 @@ class NotificationType(StrEnum):
     TASK_REMINDER = "task_reminder"
     TASK_ESCALATED = "task_escalated"
     TASK_REASSIGNED = "task_reassigned"
+    TASK_ASSIGNED_AS_PROXY = "task_assigned_as_proxy"
+    ACTED_BY_PROXY = "acted_by_proxy"
 
 
 class Notification(UUIDMixin, TimestampMixin, Base):

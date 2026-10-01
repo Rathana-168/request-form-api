@@ -11,7 +11,6 @@ from app.modules.requests.models import Request
 class ApprovalRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.proxies = ApprovalProxyRepository(db)
 
     async def get(self, task_id: uuid.UUID) -> ApprovalTask | None:
         return await self.db.get(ApprovalTask, task_id)
@@ -63,6 +62,15 @@ class ApprovalRepository:
         )
         return found is not None
 
+    async def can_view(self, request_id: uuid.UUID, acting_ids: list[uuid.UUID]) -> bool:
+        found = await self.db.scalar(
+            select(ApprovalTask.id).where(
+                ApprovalTask.request_id == request_id,
+                ApprovalTask.assignee_id.in_(acting_ids),  # mine, or my active principal's
+            ).limit(1)
+        )
+        return found is not None
+
 
 def _active_at(now: datetime):
     return and_(
@@ -108,4 +116,23 @@ class ApprovalProxyRepository:
             ).limit(1)
         )
         return found is not None
+
+    async def current_for(self, user_id: uuid.UUID, now: datetime) -> list[ApprovalProxy]:
+        """Running or scheduled proxies where the user is principal or proxy."""
+        rows = await self.db.scalars(
+            select(ApprovalProxy)
+            .where(
+                or_(ApprovalProxy.principal_id == user_id, ApprovalProxy.proxy_id == user_id),
+                ApprovalProxy.ended_at.is_(None),
+                ApprovalProxy.end_at > now,
+            )
+            .order_by(ApprovalProxy.start_at)
+        )
+        return list(rows)
+
+    async def open_by_source(self, request_id: uuid.UUID) -> ApprovalProxy | None:
+        return await self.db.scalar(select(ApprovalProxy).where(
+            ApprovalProxy.source_request_id == request_id,
+            ApprovalProxy.ended_at.is_(None),
+        ))
     

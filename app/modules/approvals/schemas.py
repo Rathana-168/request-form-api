@@ -5,16 +5,12 @@ from pydantic import BaseModel, Field
 
 from app.modules.approvals.models import TaskStatus
 from app.modules.requests.models import RequestStatus
+from app.modules.users.schemas import UserBrief
 from app.shared.schemas import ORMModel
 
 
 class ApprovalAction(BaseModel):
     comment: str | None = Field(None, max_length=2000)
-
-
-class UserBrief(ORMModel):
-    id: uuid.UUID
-    full_name: str
 
 
 class TaskOut(ORMModel):

@@ -45,3 +45,9 @@ class UserOut(ORMModel):
     manager_id: uuid.UUID | None
     roles: list[RoleBrief]
     created_at: datetime
+
+
+class UserBrief(ORMModel):
+    id: uuid.UUID
+    full_name: str
+    staff_id: str
