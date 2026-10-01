@@ -3,7 +3,7 @@ from typing import Annotated
 
 # import jwt
 from fastapi import Depends, Header
-from fastapi.security import OAuth2PasswordBearer
+# from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

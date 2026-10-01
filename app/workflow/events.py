@@ -1,53 +1,47 @@
 from enum import StrEnum
 from typing import Any
+import uuid
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.forms.data import load_form_row
 from app.modules.forms.plugin import FormContext
-from app.modules.forms.registry import get_definition
+from app.modules.notifications.repository import NotificationRepository
+from app.modules.notifications.service import NotificationService
 from app.modules.requests.models import Request
 from app.modules.users.models import User
-
-
-class Event(StrEnum):
-    SUBMITTED = "submitted"
-    STEP_APPROVED = "step_approved"
-    STEP_REJECTED = "step_rejected"
-    APPROVED = "approved"      # all steps done
-    REJECTED = "rejected"
-    RETURNED = "returned"
-    CANCELLED = "cancelled"
+from app.workflow.enums import WorkflowEvent
 
 
 # event -> FormHooks method name
 HOOKS = {
-    Event.SUBMITTED: "on_submit",
-    Event.STEP_APPROVED: "on_step_approved",
-    Event.STEP_REJECTED: "on_step_rejected",
-    Event.APPROVED: "on_approved",
-    Event.REJECTED: "on_rejected",
-    Event.RETURNED: "on_returned",
-    Event.CANCELLED: "on_cancelled",
+    WorkflowEvent.SUBMITTED: "on_submit",
+    WorkflowEvent.STEP_APPROVED: "on_step_approved",
+    WorkflowEvent.STEP_REJECTED: "on_step_rejected",
+    WorkflowEvent.APPROVED: "on_approved",
+    WorkflowEvent.REJECTED: "on_rejected",
+    WorkflowEvent.RETURNED: "on_returned",
+    WorkflowEvent.CANCELLED: "on_cancelled",
 }
 
 
 async def dispatch(
-    db: AsyncSession, event: Event, request: Request, actor: User,
-    *, step: dict[str, Any] | None = None, data: Any = None,
+    db: AsyncSession, event: WorkflowEvent, request: Request, actor: User,
+    *, step: dict[str, Any] | None = None,
+    user_ids: list[uuid.UUID] | None = None,   # NEW: approvers, for assigned / cancelled
+    comment: str | None = None,                # NEW: for rejected / returned
 ) -> None:
-    """Single exit point for workflow events. Today: plugin hooks. Later: rules too."""
-    definition = get_definition(request.form_code)
-    if data is None:
-        data = await db.scalar(
-            select(definition.model).where(definition.model.request_id == request.id)
-        )
-    ctx = FormContext(db=db, request=request, user=actor, definition=definition)
+    # 1. Plugin hook (unchanged, but skip events without one)
+    if hook_name := HOOKS.get(event):
+        definition, row = await load_form_row(db, request)
+        ctx = FormContext(db=db, request=request, user=actor, definition=definition)
+        hook = getattr(definition.hooks, hook_name)
+        await (hook(ctx, row, step) if step is not None else hook(ctx, row))
 
-    hook = getattr(definition.hooks, HOOKS[event])
-    if event in (Event.STEP_APPROVED, Event.STEP_REJECTED):
-        await hook(ctx, data, step)
-    else:
-        await hook(ctx, data)
+    # 2. Notifications
+    recipients = user_ids if user_ids is not None else [request.requester_id]
+    NotificationService(NotificationRepository(db)).create_for_event(
+        event, request, actor, recipients, step=step, comment=comment
+    )
 
-    # Later: await rules.run(db, event, request, actor, step=step, data=data)
+    # Later: rules

@@ -1,3 +1,5 @@
+from typing import Self
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -19,6 +21,10 @@ class Page[T](BaseModel):
     total: int
     page: int
     size: int
+
+    @classmethod
+    def of(cls, items: list[T], total: int, params: PageParams) -> Self:
+        return cls(items=items, total=total, page=params.page, size=params.size)
 
 
 class APIResponse[T](BaseModel):

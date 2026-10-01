@@ -8,6 +8,7 @@ from app.modules.users.router import router as users_router
 from app.modules.requests.router import router as requests_router
 from app.modules.approvals.router import router as approvals_router
 from app.workflow.router import router as workflows_router
+from app.modules.notifications.router import router as notifications_router
 
 
 api_router = APIRouter()
@@ -16,6 +17,7 @@ api_router.include_router(users_router, prefix="/users", tags=["users"])
 api_router.include_router(requests_router, prefix="/requests", tags=["requests"])
 api_router.include_router(approvals_router, prefix="/approvals", tags=["approvals"])
 api_router.include_router(workflows_router, prefix="/workflows", tags=["workflows"])
+api_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
 
 
 @api_router.get("/health", tags=["health"])

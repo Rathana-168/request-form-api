@@ -19,7 +19,8 @@ from app.modules.requests.models import (
 )
 from app.modules.users.models import Department, User, user_roles
 from app.workflow.conditions import matches
-from app.workflow.events import Event, dispatch
+from app.workflow.enums import WorkflowEvent
+from app.workflow.events import dispatch
 from app.workflow.models import AssigneeType, Workflow
 
 
@@ -92,7 +93,7 @@ async def approve(db: AsyncSession, request: Request, task: ApprovalTask, actor:
         return  # "all" mode: wait for the others
 
     # Hook to event on step action
-    await dispatch(db, Event.STEP_APPROVED, request, actor, step=step)
+    await dispatch(db, WorkflowEvent.STEP_APPROVED, request, actor, step=step)
     await _open_step(db, request, task.step_no + 1, actor)
 
 
@@ -103,8 +104,8 @@ async def reject(db: AsyncSession, request: Request, task: ApprovalTask, actor: 
     _close_task(task, TaskStatus.REJECTED, comment)
 
     await _close_open_tasks(db, request)
-    await dispatch(db, Event.STEP_REJECTED, request, actor, step=step)
-    await dispatch(db, Event.STEP_REJECTED, request, actor)
+    await dispatch(db, WorkflowEvent.STEP_REJECTED, request, actor, step=step)
+    await dispatch(db, WorkflowEvent.REJECTED, request, actor, comment=comment)
     await _finish(db, request, RequestStatus.REJECTED, stage="rejected")
     await _log(db, request, HistoryAction.REJECTED, actor, task.step_no, comment)
 
@@ -123,17 +124,25 @@ async def return_back(db: AsyncSession, request: Request, task: ApprovalTask,
         request.status = RequestStatus.RETURNED
         request.current_step = None
         request.stage = "returned"
-        await dispatch(db, Event.RETURNED, request, actor)
+        await dispatch(db, WorkflowEvent.RETURNED, request, actor, comment=comment)
     else:
         await _open_step(db, request, target, actor)   # same function submit uses
 
 
 async def cancel(db: AsyncSession, request: Request) -> None:
     """Requester cancelled: close whatever is still open."""
+    pending = await db.scalars(select(ApprovalTask.assignee_id).where(
+        ApprovalTask.request_id == request.id,
+        ApprovalTask.status == TaskStatus.PENDING,
+    ))
+    pending_ids = list(pending)
+
     await _close_open_tasks(db, request)
     request.current_step = None
     request.stage = "cancelled"
 
+    # email to user which has got the notification
+    await dispatch(db, WorkflowEvent.CANCELLED, request, request.requester, user_ids=pending_ids)
 
 async def available_actions(db: AsyncSession, request: Request, user: User) -> list[dict]:
     """What this user can do right now - the frontend renders these as buttons."""
@@ -210,12 +219,13 @@ async def _open_step(db: AsyncSession, request: Request, step_no: int, actor: Us
             for uid in approvers
         )
         await db.flush()
+        await dispatch(db, WorkflowEvent.TASK_ASSIGNED, request, actor, step=step, user_ids=approvers)
         return
 
     # Past the last step: done
     await _finish(db, request, RequestStatus.APPROVED, stage=_completed_status(request))
     await _log(db, request, HistoryAction.COMPLETED, None, None, None)
-    await dispatch(db, Event.APPROVED, request, actor)
+    await dispatch(db, WorkflowEvent.APPROVED, request, actor)
 
 
 async def _resolve_approvers(db: AsyncSession, request: Request,
