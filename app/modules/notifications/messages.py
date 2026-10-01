@@ -54,4 +54,14 @@ MESSAGES: dict[WorkflowEvent, tuple[NotificationType, str, str | None]] = {
         "{proxy} {verb} {no} on your behalf",
         "{form} from {requester} ({step}).",
     ),
+    WorkflowEvent.COMMENT_ADDED: (
+        NotificationType.COMMENT,
+        "{actor} commented on {no}",
+        "{excerpt}",
+    ),
+    WorkflowEvent.COMMENT_REPLIED: (
+        NotificationType.COMMENT,
+        "{actor} replied to a comment on {no}",
+        "{excerpt}",
+    ),
 }

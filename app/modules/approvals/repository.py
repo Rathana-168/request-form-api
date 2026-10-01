@@ -70,6 +70,14 @@ class ApprovalRepository:
             ).limit(1)
         )
         return found is not None
+    
+    async def pending_approval_tasks(self, request_id: uuid.UUID) -> list[ApprovalTask]:
+        return list(await self.db.scalars(
+            select(ApprovalTask).where(
+                ApprovalTask.request_id == request_id,
+                ApprovalTask.status == TaskStatus.PENDING,
+            )
+        ))
 
 
 def _active_at(now: datetime):

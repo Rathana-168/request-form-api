@@ -35,7 +35,7 @@ async def list_comments(
 async def add_comment(
     request_id: uuid.UUID, body: CommentCreate, user: CurrentUser, svc: CommentSvc
 ):
-    return APIResponse.success(await svc.add(request_id, user, body.body), status_code=201)
+    return ok(await svc.add(request_id, user, body.body))
 
 
 @router.patch("/{request_id}/comments/{comment_id}", response_model=APIResponse[CommentOut])
@@ -52,3 +52,26 @@ async def delete_comment(
 ):
     await svc.delete(request_id, comment_id, user)
     return ok(None)
+
+
+@router.get(
+    "/{request_id}/comments/{comment_id}/replies",
+    response_model=APIResponse[Page[CommentOut]],
+)
+async def list_replies(
+    request_id: uuid.UUID, comment_id: uuid.UUID, user: CurrentUser, svc: CommentSvc,
+    params: Annotated[PageParams, Depends()],
+):
+    return ok(await svc.list_replies(request_id, comment_id, user, params))
+
+
+@router.post(
+    "/{request_id}/comments/{comment_id}/replies",
+    response_model=APIResponse[CommentOut],
+    status_code=status.HTTP_201_CREATED,
+)
+async def reply_comment(
+    request_id: uuid.UUID, comment_id: uuid.UUID, body: CommentCreate,
+    user: CurrentUser, svc: CommentSvc,
+):
+    return ok(await svc.reply(request_id, comment_id, user, body.body))

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.approvals.exceptions import TaskNotActionableError, TaskNotFoundError
 from app.modules.approvals.models import ApprovalTask, TaskStatus
 from app.modules.approvals.repository import ApprovalProxyRepository, ApprovalRepository
+from app.modules.requests.exceptions import RequestNotFoundError
 from app.modules.requests.models import Request, RequestStatus
 from app.modules.requests.repository import RequestRepository
 from app.modules.users.models import User
@@ -28,7 +29,7 @@ class ApprovalService:
         
 
     async def inbox(self, user: User, params: PageParams, form_code: str | None) -> Page:
-        acting_ids = [user.id, *self.proxies.principals_of(user.id, datetime.now(UTC))]
+        acting_ids = [user.id, *(await self.proxies.principals_of(user.id, datetime.now(UTC)))]
         rows, total = await self.repo. inbox(
             user.id, 
             offset=params.offset, 
@@ -66,6 +67,8 @@ class ApprovalService:
 
         # Lock the request first: two approvers acting at once are serialised here
         request = await self.requests.get(task.request_id, for_update=True)
+        if not request:
+            raise RequestNotFoundError()
         await self.db.refresh(task)  # re-read after the lock
 
         if not await self._can_act(task, request, user):

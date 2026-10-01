@@ -17,6 +17,9 @@ class WorkflowEvent(StrEnum):
     
     TASK_ASSIGNED_AS_PROXY = "task_assigned_as_proxy"
     ACTED_BY_PROXY = "acted_by_proxy"
+    
+    COMMENT_ADDED = "comment_added"
+    COMMENT_REPLIED = "comment_replied"
 
 
 class EscalationAction(StrEnum):

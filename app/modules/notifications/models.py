@@ -22,6 +22,8 @@ class NotificationType(StrEnum):
     TASK_REASSIGNED = "task_reassigned"
     TASK_ASSIGNED_AS_PROXY = "task_assigned_as_proxy"
     ACTED_BY_PROXY = "acted_by_proxy"
+    
+    COMMENT = "comment"
 
 
 class Notification(UUIDMixin, TimestampMixin, Base):

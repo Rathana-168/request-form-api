@@ -22,4 +22,8 @@ class CommentOut(BaseModel):
     created_at: datetime
     edited_at: datetime | None
     is_deleted: bool
-    can_edit: bool              # for the current user; set by the service
+    can_edit: bool
+    parent_id: uuid.UUID | None = None
+    reply_count: int = 0
+    last_reply_at: datetime | None = None
+    
