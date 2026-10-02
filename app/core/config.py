@@ -15,31 +15,37 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = []
     CIF_LOOKUP_FIELD: str = 'staff_id'
     APP_TIMEZONE: str = "Asia/Phnom_Penh"
-    # End App
 
     # Database
     DATABASE_URL: str
     DATABASE_SCHEMA: str = "public"
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
-    # End Database
+    DB_ECHO: bool = False
 
     # Reis & Worker
     REDIS_URL: str
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
-    # End Database
 
     # JWT
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    # End JWT
+
+    # Kafka
+    KAFKA_WORKFLOW_TOPIC: str = "nexgen.workflow.events"
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    OUTBOX_RELAY_SECONDS: int = 5
+    OUTBOX_BATCH_SIZE: int = 100
+
+    # Outbox
+    OUTBOX_RETENTION_DAYS: int = 7
+    OUTBOX_CLEANUP_CRON: str = "30 2 * * *"   # daily at 02:30
+    OUTBOX_STUCK_MINUTES: int = 15
 
     # Worker & CRON 
     SLA_CHECK_CRON: str = "*/10 * * * *"
-    # End Worker & CRON 
-
 
 @lru_cache
 def get_settings() -> Settings:

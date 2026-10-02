@@ -4,6 +4,7 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.events.builder import build_event
 from app.modules.forms.data import load_form_row
 from app.modules.forms.plugin import FormContext
 from app.modules.notifications.repository import NotificationRepository
@@ -44,5 +45,12 @@ async def dispatch(
     NotificationService(NotificationRepository(db)).create_for_event(
         event, request, actor, recipients, step=step, comment=comment, extra=extra
     )
+
+    # 3. Outbox: same transaction, published to Kafka by the relay (Step 2)
+    db.add(build_event(
+        event, request, actor,
+        recipient_ids=[u for u in recipients if actor is None or u != actor.id],
+        step=step, comment=comment, extra=extra,
+    ))
 
     # Later: rules

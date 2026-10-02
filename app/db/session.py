@@ -10,7 +10,7 @@ from app.core.config import get_settings
 def _engine_options() -> dict[str, Any]:
     """Shared by the API engine and task engines, so both see the same schema."""
     return {
-        "echo": settings.DEBUG,
+        "echo": settings.DB_ECHO,
         "connect_args": {"server_settings": {"search_path": settings.DATABASE_SCHEMA}},
     }
 
