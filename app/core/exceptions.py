@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
+from app.integrations.base import ServiceUnavailableError
+from app.shared.schemas import APIResponse
+
 
 class AppException(Exception):
     status_code = status.HTTP_400_BAD_REQUEST
@@ -36,4 +39,11 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=exc.status_code,
             content={"code": exc.code, "message": exc.message},
+        )
+
+    @app.exception_handler(ServiceUnavailableError)
+    async def service_unavailable_handler(_: Request, exc: ServiceUnavailableError):
+        return JSONResponse(
+            status_code=503,
+            content=APIResponse(success=False, message=f"{exc.service} is unavailable").model_dump(),
         )

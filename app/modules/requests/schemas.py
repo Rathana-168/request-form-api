@@ -4,6 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.modules.attachments.schemas import AttachmentOut
 from app.modules.requests.models import HistoryAction, RequestStatus
 from app.modules.users.schemas import UserBrief
 from app.shared.schemas import ORMModel
@@ -11,10 +12,12 @@ from app.shared.schemas import ORMModel
 
 class RequestCreate(BaseModel):
     form_code: str
+    attachments: list[uuid.UUID] = []
     data: dict[str, Any]  # validated against the form plugin's create_schema
 
 
 class RequestUpdate(BaseModel):
+    attachments: list[uuid.UUID] = []
     data: dict[str, Any]  # partial; validated against the plugin's update_schema
 
 
@@ -58,6 +61,7 @@ class ApprovalStepOut(BaseModel):
 
 
 class RequestOut(RequestListItem):
+    attachments: list[AttachmentOut] = []
     completed_at: datetime | None
     data: dict[str, Any]  # shaped by the plugin's read_schema
     history: list[HistoryOut]

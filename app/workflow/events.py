@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import Any
 import uuid
 
@@ -12,7 +11,6 @@ from app.modules.notifications.service import NotificationService
 from app.modules.requests.models import Request
 from app.modules.users.models import User
 from app.workflow.enums import WorkflowEvent
-
 
 # event -> FormHooks method name
 HOOKS = {

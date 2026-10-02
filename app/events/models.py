@@ -14,11 +14,11 @@ class OutboxEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "outbox_events"
     __table_args__ = (
         Index(
-            "ix_outbox_events_unpublished", "created_at",
+            "ix_outbox_events_unpublished_created_at", "created_at",
             postgresql_where=text("published_at IS NULL"),
         ),
         Index(
-            "ix_outbox_events_unpublished", "seq",
+            "ix_outbox_events_unpublished_seq", "seq",
             postgresql_where=text("published_at IS NULL"),
         ),
     )

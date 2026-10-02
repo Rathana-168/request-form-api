@@ -1,10 +1,22 @@
 from functools import lru_cache
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class ServiceConfig(BaseModel):
+    url: str
+    api_key: str = ""
+    timeout: float = 5.0
+    retries: int = 2
+    
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=(".env", ".env.local"), extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(".env", ".env.local"), 
+        extra="ignore",
+        env_nested_delimiter="__",   # FILE_SERVICE__URL -> settings.FILE_SERVICE.url
+    )
 
     # App
     APP_NAME: str = "Workflow Service"
@@ -15,6 +27,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = []
     CIF_LOOKUP_FIELD: str = 'staff_id'
     APP_TIMEZONE: str = "Asia/Phnom_Penh"
+    MAX_UPLOAD_MB: int = 10
 
     # Database
     DATABASE_URL: str
@@ -43,6 +56,9 @@ class Settings(BaseSettings):
     OUTBOX_RETENTION_DAYS: int = 7
     OUTBOX_CLEANUP_CRON: str = "30 2 * * *"   # daily at 02:30
     OUTBOX_STUCK_MINUTES: int = 15
+
+    # Intergration Service
+    FILE_SERVICE: ServiceConfig = ServiceConfig(url="http://localhost:8001")
 
     # Worker & CRON 
     SLA_CHECK_CRON: str = "*/10 * * * *"

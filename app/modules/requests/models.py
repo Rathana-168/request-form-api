@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.mixins import TimestampMixin, UUIDMixin
 from app.db.types import str_enum
+from app.modules.attachments.models import Attachment
 from app.modules.forms.models import Form
 from app.modules.users.models import User
 
@@ -84,6 +85,7 @@ class Request(UUIDMixin, TimestampMixin, Base):
         foreign_keys=[form_code],
         lazy="selectin",
     )
+    attachments: Mapped[list[Attachment]] = relationship(lazy="selectin")
 
 
 class RequestHistory(UUIDMixin, Base):

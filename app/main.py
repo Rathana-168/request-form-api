@@ -8,12 +8,14 @@ from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
 from app.db.session import engine
+from app.integrations.registry import close_all_client_services
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     setup_logging()
     yield
+    await close_all_client_services()
     await engine.dispose()
 
 

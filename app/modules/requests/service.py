@@ -6,6 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.attachments.models import Attachment
+from app.modules.attachments.repository import AttachmentRepository
 from app.modules.comments.repository import CommentRepository
 from app.modules.forms.exceptions import FormInactiveError, FormNotFoundError
 from app.modules.forms.plugin import FormContext, FormDataMixin, FormDefinition
@@ -86,8 +88,12 @@ class RequestService:
             raise FormInactiveError()
         definition = get_definition(form.code)
         data = _validate(definition.create_schema, payload.data)
-
-        request = await self.repo.add(Request(form_code=form.code, requester_id=user.id))
+        
+        request = await self.repo.add(Request(
+            form_code=form.code, 
+            requester_id=user.id, 
+            attachments=await self._define_attachments(payload.attachments, user.id)
+        ))
         row = await definition.hooks.build(self._ctx(request, user, definition), data)
         row.request_id = request.id
         await self.repo.add_data(row)
@@ -102,6 +108,9 @@ class RequestService:
         self._require(request, EDITABLE_STATUSES, "edit")
         definition = get_definition(request.form_code)
         row = await self._data(definition, request)
+
+        # update attachments
+        request.attachments = await self._define_attachments(payload.attachments, user.id)
 
         changes = _validate(definition.update_schema, payload.data).model_dump(exclude_unset=True)
         merged = {**definition.read_schema.model_validate(row).model_dump(), **changes}
@@ -188,6 +197,18 @@ class RequestService:
             raise RuntimeError(f"Form data missing for request {request.id}")
         return row
 
+    async def _define_attachments(self, ids: list[uuid.UUID], owner_id: int) -> list[Attachment]:
+        if not ids:
+            return []
+        
+        attachments = await AttachmentRepository(self.db).get_registered_attachments(ids, owner_id)
+        db_ids = {a.id for a in attachments}
+        invalid_ids = set(ids) - db_ids
+        if invalid_ids:
+            raise ValueError(f"Attachments not found: {invalid_ids}")
+
+        return attachments
+
     async def _log(
         self,
         request: Request,
@@ -217,7 +238,7 @@ class RequestService:
         return {
             **{c: getattr(request, c) for c in (
                 "id", "request_no", "form_code", "status", "requester", "current_step",
-                "submitted_at", "completed_at", "created_at", "updated_at", "stage"
+                "submitted_at", "completed_at", "created_at", "updated_at", "stage", "attachments"
             )},
             "data": definition.read_schema.model_validate(row).model_dump(mode="json"),
             "history": await self.repo.list_history(request.id),\
