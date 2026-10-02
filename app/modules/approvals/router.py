@@ -9,7 +9,7 @@ from app.modules.approvals.service import ApprovalService
 from app.modules.requests.schemas import RequestOut
 from app.modules.requests.service import RequestService
 from app.modules.users.models import User
-from app.shared.schemas import Page, PageParams
+from app.shared.schemas import Page, PageParams, ok, APIResponse
 
 router = APIRouter()
 
@@ -23,14 +23,14 @@ def get_services(db: DbSession) -> tuple[ApprovalService, RequestService]:
 Services = Annotated[tuple[ApprovalService, RequestService], Depends(get_services)]
 
 
-@router.get("/inbox", response_model=Page[InboxItem])
+@router.get("/inbox", response_model=APIResponse[Page[InboxItem]])
 async def inbox(
     user: Approver,
     svcs: Services,
     params: Annotated[PageParams, Depends()],
     form_code: Annotated[str | None, Query(max_length=50)] = None,
 ):
-    return await svcs[0].inbox(user, params, form_code)
+    return ok(await svcs[0].inbox(user, params, form_code))
 
 
 @router.post("/{task_id}/approve", response_model=RequestOut)

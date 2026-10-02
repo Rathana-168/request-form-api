@@ -92,3 +92,16 @@ class CommentRepository:
             )
         )
         return list(rows)
+
+    async def counts_for_requests(self, request_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
+        if not request_ids:
+            return {}
+        rows = await self.db.execute(
+            select(RequestComment.request_id, func.count())
+            .where(
+                RequestComment.request_id.in_(request_ids),
+                RequestComment.deleted_at.is_(None),
+            )
+            .group_by(RequestComment.request_id)
+        )
+        return {rid: n for rid, n in rows.all()}

@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.comments.repository import CommentRepository
 from app.modules.forms.exceptions import FormInactiveError, FormNotFoundError
 from app.modules.forms.plugin import FormContext, FormDataMixin, FormDefinition
 from app.modules.forms.registry import get_definition
@@ -122,11 +123,13 @@ class RequestService:
         await definition.hooks.on_submit(ctx, row)
 
         is_resubmit = request.status == RequestStatus.RETURNED
-        if not request.request_no:
-            request.request_no = await self.repo.next_request_no(definition.prefix)
         request.status = RequestStatus.IN_PROGRESS
         request.submitted_at = datetime.now(UTC)
         await engine.start(self.db, request, user)
+
+        # take the ticket no after process done
+        if not request.request_no:
+            request.request_no = await self.repo.next_request_no(definition.prefix)
 
         await self._log(
             request,
@@ -221,4 +224,5 @@ class RequestService:
             "approvals": await self.approvals.for_request(request.id),
             "available_actions": await engine.available_actions(self.db, request, user) if user else [],
             "approval_steps": [{"order": s["step_no"], "label": s["name"]} for s in engine.steps_of(request)],
+            "comment_count": await CommentRepository(self.db).count_for_request(request.id),
         }

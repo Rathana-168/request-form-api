@@ -30,8 +30,8 @@ class Page[T](BaseModel):
 class APIResponse[T](BaseModel):
     success: bool = True
     message: str | None = "success"
-    data: T | None = None
+    result: T | None = None
 
 
 def ok[T](data: T, message: str = "success") -> APIResponse[T]:
-    return APIResponse(data=data, message=message)
+    return APIResponse(result=data, message=message)

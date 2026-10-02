@@ -64,6 +64,7 @@ class RequestOut(RequestListItem):
     approvals: list[ApprovalOut]
     available_actions: list[ActionOut]  # for the current user
     approval_steps: list[ApprovalStepOut] = []
+    comment_count: int = 0
 
 
 class ApprovalOut(ORMModel):

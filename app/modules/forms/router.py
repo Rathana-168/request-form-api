@@ -9,7 +9,7 @@ from app.modules.forms.repository import FormRepository
 from app.modules.forms.schemas import FormCreate, FormOut, FormUpdate
 from app.modules.forms.service import FormService
 from app.modules.users.models import User
-from app.shared.schemas import Page, PageParams
+from app.shared.schemas import Page, PageParams, ok, APIResponse
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ FormSvc = Annotated[FormService, Depends(get_form_service)]
 FormManager = Annotated[User, Depends(require_permission("form:manage"))]
 
 
-@router.get("", response_model=Page[FormOut])
+@router.get("", response_model=APIResponse[Page[FormOut]])
 async def list_forms(
     user: CurrentUser,
     svc: FormSvc,
@@ -32,31 +32,31 @@ async def list_forms(
     include_inactive: bool = False,
 ):
     can_manage = user.is_superuser or "form:manage" in user.permission_codes
-    return await svc.list(
+    return ok(await svc.list(
         params,
         active_only=not (include_inactive and can_manage),
         search=search,
         category=category,
-    )
+    ))
 
 
-@router.get("/available-codes", response_model=list[str])
+@router.get("/available-codes", response_model=APIResponse[list[str]])
 async def available_codes(_: FormManager, svc: FormSvc):
-    return await svc.available_codes()
+    return ok(await svc.available_codes(), message="Available code need to add to Form")
 
 
-@router.get("/{form_id}", response_model=FormOut)
+@router.get("/{form_id}", response_model=APIResponse[FormOut])
 async def get_form(form_id: uuid.UUID, _: CurrentUser, svc: FormSvc):
-    return await svc.get(form_id)
+    return ok(await svc.get(form_id))
 
 
-@router.post("", response_model=FormOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=APIResponse[FormOut], status_code=status.HTTP_201_CREATED)
 async def create_form(data: FormCreate, user: FormManager, svc: FormSvc):
-    return await svc.create(data, created_by=user)
+    return ok(await svc.create(data, created_by=user))
 
 
-@router.patch("/{form_id}", response_model=FormOut)
+@router.patch("/{form_id}", response_model=APIResponse[FormOut])
 async def update_form(
     form_id: uuid.UUID, data: FormUpdate, _: FormManager, svc: FormSvc
 ):
-    return await svc.update(form_id, data)
+    return ok(await svc.update(form_id, data))
