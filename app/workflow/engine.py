@@ -21,7 +21,7 @@ from app.modules.requests.models import (
 from app.modules.users.models import Department, User, user_roles
 from app.workflow.conditions import matches
 from app.workflow.enums import WorkflowEvent
-from app.workflow.events import dispatch
+from app.workflow.dispatch import dispatch
 from app.workflow.models import AssigneeType, Workflow
 
 

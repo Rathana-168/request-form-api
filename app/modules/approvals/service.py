@@ -15,7 +15,7 @@ from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
 from app.workflow import engine
 from app.workflow.enums import WorkflowEvent
-from app.workflow.events import dispatch
+from app.workflow.dispatch import dispatch
 
 Action = Callable[[AsyncSession, Request, ApprovalTask, User, str | None], Awaitable[None]]
 VERBS = {"approve": "approved", "reject": "rejected", "return": "returned"}

@@ -25,8 +25,12 @@ HOOKS = {
 
 
 async def dispatch(
-    db: AsyncSession, event: WorkflowEvent, request: Request, actor: User,
-    *, step: dict[str, Any] | None = None,
+    db: AsyncSession, 
+    event: WorkflowEvent, 
+    request: Request, 
+    actor: User,
+    *, 
+    step: dict[str, Any] | None = None,
     user_ids: list[uuid.UUID] | None = None,   # NEW: approvers, for assigned / cancelled
     comment: str | None = None,                # NEW: for rejected / returned
     extra: dict[str, str] | None = None,   # NEW: extra template values
@@ -44,7 +48,7 @@ async def dispatch(
         event, request, actor, recipients, step=step, comment=comment, extra=extra
     )
 
-    # 3. Outbox: same transaction, published to Kafka by the relay (Step 2)
+    # 3. Outbox: same transaction, published to Kafka by the relay
     db.add(build_event(
         event, request, actor,
         recipient_ids=[u for u in recipients if actor is None or u != actor.id],
