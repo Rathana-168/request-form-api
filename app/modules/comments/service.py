@@ -5,12 +5,13 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.approvals.repository import ApprovalRepository
+from app.modules.attachments.service import AttachmentService
 from app.modules.comments.exceptions import (
     CommentNotFoundError, CommentsClosedError, NotCommentAuthorError,
 )
 from app.modules.comments.models import RequestComment
 from app.modules.comments.repository import CommentRepository
-from app.modules.comments.schemas import CommentOut
+from app.modules.comments.schemas import CommentCreate, CommentOut
 from app.modules.requests.access import acting_for, can_view_request
 from app.modules.requests.exceptions import RequestNotFoundError
 from app.modules.requests.models import Request, RequestStatus
@@ -45,9 +46,9 @@ class CommentService:
         items, total = await self.repo.list_replies(parent.id, offset=params.offset, limit=params.size)
         return Page.of([self._out(c, request, user) for c in items], total, params)
 
-    async def add(self, request_id, user, body) -> CommentOut:
+    async def add(self, request_id: uuid.UUID, user: User, comment: CommentCreate) -> CommentOut:
         request = await self._visible_request(request_id, user)
-        return await self._create(request, user, body, parent_id=None)
+        return await self._create(request, user, comment, parent_id=None)
 
     async def reply(self, request_id, comment_id, user, body) -> CommentOut:
         request = await self._visible_request(request_id, user)
@@ -88,14 +89,16 @@ class CommentService:
         self._ensure_open(request)
         return request, comment
     
-    async def _create(self, request, user, body, *, parent_id) -> CommentOut:
+    async def _create(self, request: Request, user: User, body: CommentCreate, *, parent_id: uuid.UUID | None = None) -> CommentOut:
         self._ensure_open(request)
+        attachments = await AttachmentService(self.db).load(set(body.attachments), user)
         comment = RequestComment(
             request_id=request.id,
             parent_id=parent_id,
             author_id=user.id,
             on_behalf_of_id=await acting_for(self.db, request, user),
-            body=self._clean(body),
+            body=self._clean(body.body),
+            attachments=attachments
         )
         self.repo.add(comment)
         await self.db.flush()
@@ -133,6 +136,9 @@ class CommentService:
         for a in assignees:
             ids += await engine.proxy_ids_for(self.db, a, request)
         return ids
+
+    async def _load_attachment(self, file_ids: list[uuid.UUID]):
+        return await AttachmentService(self.db).load(set(body.attachments), user)
 
     @staticmethod
     def _actor_label(comment: RequestComment, user: User) -> str:

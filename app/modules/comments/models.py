@@ -1,12 +1,20 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import TimestampMixin, UUIDMixin
+from app.modules.attachments.models import Attachment
 from app.modules.users.models import User
+
+
+comment_attachments = Table(
+    "request_comment_attachments", Base.metadata,
+    Column("comment_id", ForeignKey("request_comments.id", ondelete="CASCADE"), primary_key=True),
+    Column("attachment_id", ForeignKey("attachments.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class RequestComment(UUIDMixin, TimestampMixin, Base):
@@ -37,3 +45,4 @@ class RequestComment(UUIDMixin, TimestampMixin, Base):
     parent_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("request_comments.id", ondelete="CASCADE")
     )
+    attachments: Mapped[list[Attachment]] = relationship(secondary=comment_attachments, lazy="selectin")

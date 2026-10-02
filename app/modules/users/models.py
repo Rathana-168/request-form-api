@@ -39,7 +39,7 @@ class Role(UUIDMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(String(255))
 
     permissions: Mapped[list[Permission]] = relationship(
-        secondary=role_permissions, lazy="selectin"
+        secondary=role_permissions, lazy="raise"
     )
 
 
@@ -64,7 +64,7 @@ class User(UUIDMixin, TimestampMixin, Base):
 
     staff_id: Mapped[str | None] = mapped_column(String(10), index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
-    hashed_password: Mapped[str] = mapped_column(String(255))
+    hashed_password: Mapped[str] = mapped_column(String(255), deferred=True)
     full_name: Mapped[str] = mapped_column(String(150))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -77,10 +77,10 @@ class User(UUIDMixin, TimestampMixin, Base):
     )
 
     department: Mapped[Department | None] = relationship(
-        foreign_keys=[department_id], lazy="selectin"
+        foreign_keys=[department_id], lazy="joined"
     )
     manager: Mapped["User | None"] = relationship(remote_side="User.id")
-    roles: Mapped[list[Role]] = relationship(secondary=user_roles, lazy="selectin")
+    roles: Mapped[list[Role]] = relationship(secondary=user_roles, lazy="raise")
 
     @property
     def permission_codes(self) -> set[str]:

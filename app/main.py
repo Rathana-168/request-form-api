@@ -7,6 +7,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
+from app.db import query_counter
 from app.db.session import engine
 from app.integrations.registry import close_all_client_services
 
@@ -32,6 +33,10 @@ def create_app() -> FastAPI:
     )
     register_exception_handlers(app)
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+    
+    if settings.DB_ECHO: # dev only: SQL count per request
+        query_counter.install(app, engine)
+        
     return app
 
 

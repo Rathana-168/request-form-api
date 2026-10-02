@@ -6,11 +6,12 @@ from fastapi import Depends, Header
 # from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import PermissionDeniedError, UnauthorizedError
 # from app.core.security import decode_token
 from app.db.session import get_db
-from app.modules.users.models import User
+from app.modules.users.models import Role, User
 from app.core.config import get_settings
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
@@ -31,7 +32,13 @@ async def get_current_user(
     # except jwt.InvalidTokenError:
     #     raise UnauthorizedError("Invalid or expired token")
     lookup_col = getattr(User, get_settings().CIF_LOOKUP_FIELD)
-    user = await db.scalar(select(User).where(lookup_col == cif))
+    user = await db.scalar(
+        select(User)
+        .where(lookup_col == cif)
+        .options(
+            selectinload(User.roles).selectinload(Role.permissions)
+        )
+    )
     if not user or not user.is_active:
         raise UnauthorizedError("User inactive or not found")
     return user

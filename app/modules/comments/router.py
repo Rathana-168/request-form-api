@@ -33,9 +33,9 @@ async def list_comments(
     status_code=status.HTTP_201_CREATED,
 )
 async def add_comment(
-    request_id: uuid.UUID, body: CommentCreate, user: CurrentUser, svc: CommentSvc
+    request_id: uuid.UUID, comment: CommentCreate, user: CurrentUser, svc: CommentSvc
 ):
-    return ok(await svc.add(request_id, user, body.body))
+    return ok(await svc.add(request_id, user, comment))
 
 
 @router.patch("/{request_id}/comments/{comment_id}", response_model=APIResponse[CommentOut])

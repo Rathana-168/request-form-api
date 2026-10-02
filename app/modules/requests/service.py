@@ -234,11 +234,12 @@ class RequestService:
     ) -> dict[str, Any]:
         definition = definition or get_definition(request.form_code)
         await self.db.refresh(request)  # pick up server-side updated_at
+        await self.db.refresh(request, attribute_names=["attachments"]) # query to get attachments
         row = await self._data(definition, request)
         return {
             **{c: getattr(request, c) for c in (
                 "id", "request_no", "form_code", "status", "requester", "current_step",
-                "submitted_at", "completed_at", "created_at", "updated_at", "stage", "attachments"
+                "submitted_at", "completed_at", "created_at", "updated_at", "stage"
             )},
             "data": definition.read_schema.model_validate(row).model_dump(mode="json"),
             "history": await self.repo.list_history(request.id),\
@@ -246,4 +247,5 @@ class RequestService:
             "available_actions": await engine.available_actions(self.db, request, user) if user else [],
             "approval_steps": [{"order": s["step_no"], "label": s["name"]} for s in engine.steps_of(request)],
             "comment_count": await CommentRepository(self.db).count_for_request(request.id),
+            "attachments": request.attachments
         }

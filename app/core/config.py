@@ -52,16 +52,20 @@ class Settings(BaseSettings):
     OUTBOX_RELAY_SECONDS: int = 5
     OUTBOX_BATCH_SIZE: int = 100
 
-    # Outbox
-    OUTBOX_RETENTION_DAYS: int = 7
-    OUTBOX_CLEANUP_CRON: str = "30 2 * * *"   # daily at 02:30
-    OUTBOX_STUCK_MINUTES: int = 15
-
     # Intergration Service
     FILE_SERVICE: ServiceConfig = ServiceConfig(url="http://localhost:8001")
 
-    # Worker & CRON 
+    # Task & CRONTab
     SLA_CHECK_CRON: str = "*/10 * * * *"
+    
+    OUTBOX_RETENTION_DAYS: int = 7
+    OUTBOX_CLEANUP_CRON: str = "30 2 * * *"   # daily at 02:30
+    OUTBOX_STUCK_MINUTES: int = 15
+        
+    ATTACHMENT_CLEANUP_CRON: str = "0 3 * * *"   # daily 03:00
+    ATTACHMENT_UNUSED_HOURS: int = 24
+    ATTACHMENT_USE_REQUEST_ID: bool = True 
+
 
 @lru_cache
 def get_settings() -> Settings:

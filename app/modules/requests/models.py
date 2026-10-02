@@ -85,8 +85,12 @@ class Request(UUIDMixin, TimestampMixin, Base):
         foreign_keys=[form_code],
         lazy="selectin",
     )
-    attachments: Mapped[list[Attachment]] = relationship(lazy="selectin")
-
+    
+    attachments: Mapped[list[Attachment]] = relationship(
+        lazy="raise", passive_deletes=True, order_by="Attachment.created_at")
+    # passive_deletes=True: lets the database's ON DELETE SET NULL handle deletes, 
+    # instead of SQLAlchemy loading the files first.
+    
 
 class RequestHistory(UUIDMixin, Base):
     """Timeline of a request. Each submit stores a snapshot of the form data."""

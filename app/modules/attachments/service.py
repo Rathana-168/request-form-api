@@ -3,12 +3,13 @@ import uuid
 from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from collections.abc import Set as AbstractSet
 
 from app.core.config import get_settings
 from app.integrations.file_service.client import FileRejectedError
 from app.integrations.registry import file_service
 from app.modules.attachments.exceptions import (
-    AttachmentNotFoundError, FileTooLargeError, InvalidUploadError,
+    AttachmentNotFoundError, FileTooLargeError, InvalidAttachmentError, InvalidUploadError,
 )
 from app.modules.attachments.models import Attachment
 from app.modules.attachments.schemas import DownloadOut
@@ -48,6 +49,19 @@ class AttachmentService:
             raise AttachmentNotFoundError()   # same error, so IDs can't be probed
         url, expires_in = await file_service.download_url(att.id)
         return DownloadOut(url=url, expires_in=expires_in)
+    
+    async def load(
+        self, ids: set[uuid.UUID], user: User, *, already_used: AbstractSet[uuid.UUID] = frozenset()
+    ) -> list[Attachment]:
+        """Load the attachments a form references. New ones must be uploaded by this user."""
+        if not ids:
+            return []
+        rows = {a.id: a for a in await self.db.scalars(select(Attachment).where(Attachment.id.in_(ids)))}
+        for file_id in ids:
+            att = rows.get(file_id)
+            if att is None or (file_id not in already_used and att.uploaded_by_id != user.id):
+                raise InvalidAttachmentError(file_id)
+        return list(rows.values())
 
     async def _can_view(self, att: Attachment, user: User) -> bool:
         if att.request_id is None:                     # not used yet: only the uploader

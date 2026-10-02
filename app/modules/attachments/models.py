@@ -19,5 +19,5 @@ class Attachment(UUIDMixin, TimestampMixin, Base):
     )
     uploaded_by: Mapped[User | None] = relationship(lazy="selectin")
     request_id: Mapped[uuid.UUID | None] = mapped_column(
-            ForeignKey("requests.id", ondelete="CASCADE"), index=True
+            ForeignKey("requests.id", ondelete="SET NULL"), index=True
         )
