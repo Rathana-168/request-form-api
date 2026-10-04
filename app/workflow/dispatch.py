@@ -1,6 +1,7 @@
 from typing import Any
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.events.builder import build_event
@@ -49,10 +50,11 @@ async def dispatch(
     )
 
     # 3. Outbox: same transaction, published to Kafka by the relay
-    db.add(build_event(
-        event, request, actor,
-        recipient_ids=[u for u in recipients if actor is None or u != actor.id],
-        step=step, comment=comment, extra=extra,
-    ))
+    ids = [u for u in recipients if actor is None or u != actor.id]
+    users = list(await db.scalars(
+        select(User).where(User.id.in_(ids), User.is_active)
+    )) if ids else []
+    db.add(build_event(event, request, actor, recipients=users,
+                       step=step, comment=comment, extra=extra))
 
     # Later: rules
