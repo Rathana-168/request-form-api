@@ -74,4 +74,4 @@ async def reply_comment(
     request_id: uuid.UUID, comment_id: uuid.UUID, body: CommentCreate,
     user: CurrentUser, svc: CommentSvc,
 ):
-    return ok(await svc.reply(request_id, comment_id, user, body.body))
+    return ok(await svc.reply(request_id, comment_id, user, body))

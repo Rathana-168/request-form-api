@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.modules.users.models import Role, User
 from app.modules.users.models import Department  # add to imports
@@ -17,14 +18,22 @@ class UserRepository:
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(User).where(func.lower(User.email) == email.lower())
         return await self.db.scalar(stmt)
+    
+    async def get_by_staff_id(self, staff_id: str) -> User | None:
+        stmt = select(User).where(User.staff_id == staff_id)
+        return await self.db.scalar(stmt)
 
     async def list(
         self, *, offset: int, limit: int, search: str | None = None
     ) -> tuple[list[User], int]:
-        stmt = select(User)
+        stmt = select(User).options(selectinload(User.roles))
         if search:
             like = f"%{search}%"
-            stmt = stmt.where(or_(User.full_name.ilike(like), User.email.ilike(like)))
+            stmt = stmt.where(or_(
+                User.full_name.ilike(like), 
+                User.email.ilike(like),
+                User.staff_id.ilike(like),
+            ))
 
         total = await self.db.scalar(select(func.count()).select_from(stmt.subquery()))
         rows = await self.db.scalars(

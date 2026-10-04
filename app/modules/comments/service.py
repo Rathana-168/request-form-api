@@ -50,7 +50,7 @@ class CommentService:
         request = await self._visible_request(request_id, user)
         return await self._create(request, user, comment, parent_id=None)
 
-    async def reply(self, request_id, comment_id, user, body) -> CommentOut:
+    async def reply(self, request_id, comment_id, user, body: CommentCreate) -> CommentOut:
         request = await self._visible_request(request_id, user)
         parent = await self._thread_parent(request, comment_id)
         return await self._create(request, user, body, parent_id=parent.id)

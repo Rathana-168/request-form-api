@@ -5,6 +5,7 @@ from app.modules.users.exceptions import (
     EmailAlreadyExistsError,
     InvalidManagerError,
     InvalidReferenceError,
+    StaffIdAlreadyExistsError,
     UserNotFoundError,
 )
 from app.modules.users.models import User
@@ -38,24 +39,30 @@ class UserService:
             await self.get(data.manager_id)  # must exist
 
         user = User(
+            staff_id=data.staff_id,
             email=data.email.lower(),
             hashed_password=hash_password(data.password),
             full_name=data.full_name,
             department_id=data.department_id,
             manager_id=data.manager_id,
-            roles=await self._load_roles(data.role_ids),
+            roles=await self._load_roles(data.role_ids)
         )
         return await self.repo.add(user)
 
     async def update(self, user_id: uuid.UUID, data: UserUpdate) -> User:
         user = await self.get(user_id)
         changes = data.model_dump(exclude_unset=True)
+        
+        if changes.get("staff_id") and changes["staff_id"] != user.staff_id:
+            if await self.repo.get_by_staff_id(changes["staff_id"]):
+                raise StaffIdAlreadyExistsError()
 
         if "department_id" in changes:
             await self._check_department(changes["department_id"])
         if "manager_id" in changes:
             await self._check_manager(user, changes["manager_id"])
         if "role_ids" in changes:
+            await self.repo.db.refresh(user, attribute_names=["roles"])
             user.roles = await self._load_roles(changes.pop("role_ids"))
 
         for field, value in changes.items():

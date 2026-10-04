@@ -21,3 +21,10 @@ class InvalidReferenceError(AppException):
 
 class InvalidManagerError(AppException):
     code = "INVALID_MANAGER"  # self-manager or reporting loop
+
+
+class StaffIdAlreadyExistsError(ConflictError):
+    code = "STAFF_ID_ALREADY_EXISTS"
+
+    def __init__(self):
+        super().__init__("Staff ID is already in use")
