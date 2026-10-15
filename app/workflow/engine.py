@@ -4,11 +4,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import status
 from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import AppException
 from app.modules.approvals.models import ApprovalTask, TaskStatus
 from app.modules.approvals.repository import ApprovalProxyRepository
 from app.modules.forms.data import load_form_row
@@ -18,35 +16,13 @@ from app.modules.requests.models import (
     RequestHistory,
     RequestStatus,
 )
-from app.modules.users.models import Department, User, user_roles
+from app.modules.users.models import User
 from app.workflow.conditions import matches
 from app.workflow.enums import WorkflowEvent
 from app.workflow.dispatch import dispatch
-from app.workflow.models import AssigneeType, Workflow
-
-
-class NoActiveWorkflowError(AppException):
-    status_code = status.HTTP_409_CONFLICT
-    code = "NO_ACTIVE_WORKFLOW"
-
-    def __init__(self, form_code: str):
-        super().__init__(f"Form '{form_code}' has no active workflow")
-
-
-class ActionNotAllowedError(AppException):
-    status_code = status.HTTP_409_CONFLICT
-    code = "ACTION_NOT_ALLOWED"
-
-    def __init__(self, action: str, step_name: str):
-        super().__init__(f"'{action}' is not allowed at step '{step_name}'")
-
-
-class CommentRequiredError(AppException):
-    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
-    code = "COMMENT_REQUIRED"
-
-    def __init__(self, action: str):
-        super().__init__(f"A comment is required to {action}")
+from app.workflow.exceptions import ActionNotAllowedError, CommentRequiredError, NoActiveWorkflowError
+from app.workflow.models import Workflow
+from app.workflow.resolvers import resolve_step_users
 
 
 STEP_FIELDS = (
@@ -246,7 +222,7 @@ async def _open_step(db: AsyncSession, request: Request, step_no: int, actor: Us
             step_no += 1
             continue
 
-        approvers = await _resolve_approvers(db, request, step)
+        approvers = await resolve_step_users(db, request, step)
         if not approvers:
             await _log(db, request, HistoryAction.SKIPPED, None, step_no, "No approver")
             step_no += 1
@@ -285,41 +261,6 @@ async def _open_step(db: AsyncSession, request: Request, step_no: int, actor: Us
     await _finish(db, request, RequestStatus.APPROVED, stage=_completed_status(request))
     await _log(db, request, HistoryAction.COMPLETED, None, None, None)
     await dispatch(db, WorkflowEvent.APPROVED, request, actor)
-
-
-async def _resolve_approvers(db: AsyncSession, request: Request,
-                             step: dict[str, Any]) -> list[uuid.UUID]:
-    requester = await db.get(User, request.requester_id)
-    kind = AssigneeType(step["assignee_type"])
-    ids: list[uuid.UUID] = []
-
-    if kind is AssigneeType.USER and step["assignee_user_id"]:
-        ids = [uuid.UUID(step["assignee_user_id"])]
-    elif kind is AssigneeType.ROLE and step["assignee_role_id"]:
-        ids = list(await db.scalars(
-            select(user_roles.c.user_id).where(
-                user_roles.c.role_id == uuid.UUID(step["assignee_role_id"])
-            )
-        ))
-    elif kind is AssigneeType.REQUESTER_MANAGER and requester.manager_id:
-        ids = [requester.manager_id]
-    elif kind is AssigneeType.DEPARTMENT_HEAD and requester.department_id:
-        head_id = await db.scalar(
-            select(Department.head_id).where(Department.id == requester.department_id)
-        )
-        ids = [head_id] if head_id else []
-    elif kind is AssigneeType.FORM_FIELD and step["assignee_field"]:
-        value = (await _form_data(db, request)).get(step["assignee_field"])
-        values = value if isinstance(value, list) else [value]
-        ids = [v if isinstance(v, uuid.UUID) else uuid.UUID(str(v)) for v in values if v]
-
-    if ids:  # only active users
-        ids = list(await db.scalars(
-            select(User.id).where(User.id.in_(ids), User.is_active).order_by(User.full_name)
-        ))
-    if step["skip_if_requester"]:
-        ids = [i for i in ids if i != request.requester_id]
-    return ids
 
 
 def _step(request: Request, step_no: int) -> dict[str, Any]:
