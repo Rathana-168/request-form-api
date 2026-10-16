@@ -46,7 +46,7 @@ async def resolve_step_users(
     return ids
 
 
-async def _user(step: dict[str, Any]) -> list[uuid.UUID]:
+def _user(step: dict[str, Any]) -> list[uuid.UUID]:
     user_id = step.get("assignee_user_id")
     return [uuid.UUID(user_id)]
 
