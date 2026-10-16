@@ -26,8 +26,9 @@ api_router.include_router(attachments_router, prefix="/attachments", tags=["atta
 
 @api_router.get("/health", tags=["health"])
 async def health(db: DbSession):
+    from app.integrations.redis import ping_redis
     await db.execute(text("SELECT 1"))
-    return {"status": "ok"}
+    return {"status": "ok", "redis": await ping_redis()}
 
 # Register form router will scallable as form increase
 from app.modules.forms.registry import load_plugins

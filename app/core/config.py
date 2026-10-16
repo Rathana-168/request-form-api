@@ -39,13 +39,19 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = 20
     DB_ECHO: bool = False
 
-    # Reis & Worker
+    # Redis & Worker
     REDIS_URL: str
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
+    
+    REDIS_CONNECT_TIMEOUT: float = 1.0
+    REDIS_SOCKET_TIMEOUT: float = 1.0
+    REDIS_RETRIES: int = 1
+    REDIS_MAX_CONNECTIONS: int = 50
+    REVOCATION_FAIL_OPEN: bool = False
 
     # JWT
-    JWT_SECRET: str
+    JWT_SECRET: str = "kajlxjsidfjw8essfdew3esd"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
