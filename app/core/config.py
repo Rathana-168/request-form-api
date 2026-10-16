@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     APP_TIMEZONE: str = "Asia/Phnom_Penh"
     MAX_UPLOAD_MB: int = 10
 
+    AUTH_PROVIDER: str = "local"          # later: "ldap"
+    DEFAULT_PASSWORD: str = "admin"       # temporary, until LDAP
+
     # Database
     DATABASE_URL: str
     DATABASE_SCHEMA: str = "public"
@@ -42,9 +45,18 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str
 
     # JWT
+    JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # LDAP
+    LDAP_URL: str = "ldaps://ldap.company.local:636"
+    LDAP_BIND_DN: str = ""            # service account DN
+    LDAP_BIND_PASSWORD: str = ""
+    LDAP_BASE_DN: str = "dc=company,dc=local"
+    LDAP_STAFF_ID_ATTR: str = "sAMAccountName"   # or employeeID, depending on your directory
+    LDAP_TIMEOUT: int = 5
 
     # Kafka
     KAFKA_WORKFLOW_TOPIC: str = "nexgen.workflow.events"
@@ -70,3 +82,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+settings = get_settings()

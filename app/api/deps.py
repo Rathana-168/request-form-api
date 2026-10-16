@@ -1,43 +1,47 @@
-# import uuid
+import uuid
 from typing import Annotated
 
-# import jwt
-from fastapi import Depends, Header
-# from fastapi.security import OAuth2PasswordBearer
+import jwt
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import PermissionDeniedError, UnauthorizedError
-# from app.core.security import decode_token
+from app.core.security import decode_payload
 from app.db.session import get_db
+from app.modules.auth.revocation import is_revoked, is_session_revoked
 from app.modules.users.models import Role, User
-from app.core.config import get_settings
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
-async def get_current_user(
-    db: DbSession, 
-    # token: Annotated[str, Depends(oauth2_scheme)],
-    cif: Annotated[str | None, Header()] = None,
-) -> User:
-    if not cif:
-        raise UnauthorizedError("Missing CIF header")
+async def get_token_payload(
+    token: Annotated[str | None, Depends(oauth2_scheme)],
+) -> dict:
+    if not token:
+        raise UnauthorizedError("Not authenticated")
+    try:
+        payload = decode_payload(token, "access")
+    except jwt.InvalidTokenError:
+        raise UnauthorizedError("Invalid or expired token")
     
-    # try:
-    #     user_id: uuid.UUID = decode_token(token, "access")
-    # except jwt.InvalidTokenError:
-    #     raise UnauthorizedError("Invalid or expired token")
-    lookup_col = getattr(User, get_settings().CIF_LOOKUP_FIELD)
+    if await is_session_revoked(payload["sid"]):
+        raise UnauthorizedError("Session logged out")
+    return payload
+
+
+TokenPayload = Annotated[dict, Depends(get_token_payload)]
+
+
+async def get_current_user(db: DbSession, payload: TokenPayload) -> User:
     user = await db.scalar(
         select(User)
-        .where(lookup_col == cif)
-        .options(
-            selectinload(User.roles).selectinload(Role.permissions)
-        )
+        .where(User.id == uuid.UUID(payload["sub"]))
+        .options(selectinload(User.roles).selectinload(Role.permissions))
     )
     if not user or not user.is_active:
         raise UnauthorizedError("User inactive or not found")
