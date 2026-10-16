@@ -10,6 +10,7 @@ from app.core.logging import setup_logging
 from app.db import query_counter
 from app.db.session import engine
 from app.integrations.registry import close_all_client_services
+from app.integrations.redis import close_redis
 
 
 @asynccontextmanager
@@ -17,6 +18,7 @@ async def lifespan(_: FastAPI):
     setup_logging()
     yield
     await close_all_client_services()
+    await close_redis()
     await engine.dispose()
 
 

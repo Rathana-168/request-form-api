@@ -9,8 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import PermissionDeniedError, UnauthorizedError
-from app.core.security import decode_token
+from app.core.security import decode_payload
 from app.db.session import get_db
+from app.modules.auth.revocation import is_revoked, is_session_revoked
 from app.modules.users.models import Role, User
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
@@ -18,20 +19,28 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
-async def get_current_user(
-    db: DbSession,
+async def get_token_payload(
     token: Annotated[str | None, Depends(oauth2_scheme)],
-) -> User:
+) -> dict:
     if not token:
         raise UnauthorizedError("Not authenticated")
     try:
-        user_id: uuid.UUID = decode_token(token, "access")
+        payload = decode_payload(token, "access")
     except jwt.InvalidTokenError:
         raise UnauthorizedError("Invalid or expired token")
+    
+    if await is_session_revoked(payload["sid"]):
+        raise UnauthorizedError("Session logged out")
+    return payload
 
+
+TokenPayload = Annotated[dict, Depends(get_token_payload)]
+
+
+async def get_current_user(db: DbSession, payload: TokenPayload) -> User:
     user = await db.scalar(
         select(User)
-        .where(User.id == user_id)
+        .where(User.id == uuid.UUID(payload["sub"]))
         .options(selectinload(User.roles).selectinload(Role.permissions))
     )
     if not user or not user.is_active:

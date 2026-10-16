@@ -3,8 +3,9 @@ import uuid
 import jwt
 
 from app.core.exceptions import UnauthorizedError
-from app.core.security import create_token, decode_token
+from app.core.security import create_token, decode_payload
 from app.modules.auth.providers.base import AuthProvider
+from app.modules.auth.revocation import is_revoked, revoke, revoke_session
 from app.modules.auth.schemas import TokenPair
 from app.modules.users.repository import UserRepository
 
@@ -18,21 +19,29 @@ class AuthService:
         user = await self.provider.authenticate(staff_id=staff_id, password=password)
         if not user or not user.is_active:
             raise UnauthorizedError("Invalid staff ID or password")
-        return self._issue(user.id)
+        return self._issue(user.id, user.staff_id)
 
     async def refresh(self, refresh_token: str) -> TokenPair:
         try:
-            user_id = decode_token(refresh_token, "refresh")
+            payload = decode_payload(refresh_token, "refresh")
         except jwt.InvalidTokenError:
             raise UnauthorizedError("Invalid or expired refresh token")
-        user = await self.repo.get(user_id)
+        if await is_revoked(payload["jti"]):
+            raise UnauthorizedError("Refresh token already used or revoked")
+
+        user = await self.repo.get(uuid.UUID(payload["sub"]))
         if not user or not user.is_active:
             raise UnauthorizedError("User inactive or not found")
-        return self._issue(user.id)
+
+        await revoke(payload)  # rotation: old refresh token is now dead
+        return self._issue(user.id, user.staff_id)
+
+    async def logout(self, sid: str) -> None:
+        await revoke_session(sid)
 
     @staticmethod
-    def _issue(user_id: uuid.UUID) -> TokenPair:
+    def _issue(user_id: uuid.UUID, sid: str) -> TokenPair:
         return TokenPair(
-            access_token=create_token(user_id, "access"),
-            refresh_token=create_token(user_id, "refresh"),
+            access_token=create_token(user_id, "access", sid),
+            refresh_token=create_token(user_id, "refresh", sid),
         )
