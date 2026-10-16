@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import CurrentUser, DbSession
+from app.modules.auth.providers import build_auth_provider
 from app.modules.auth.schemas import RefreshRequest, TokenPair
 from app.modules.auth.service import AuthService
 from app.modules.users.repository import UserRepository
@@ -13,7 +14,8 @@ router = APIRouter()
 
 
 def get_auth_service(db: DbSession) -> AuthService:
-    return AuthService(UserRepository(db))
+    users = UserRepository(db)
+    return AuthService(users, build_auth_provider(users))
 
 
 AuthSvc = Annotated[AuthService, Depends(get_auth_service)]

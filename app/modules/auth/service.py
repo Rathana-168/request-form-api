@@ -1,22 +1,23 @@
+import uuid
+
 import jwt
 
 from app.core.exceptions import UnauthorizedError
-from app.core.security import create_token, decode_token, verify_password
+from app.core.security import create_token, decode_token
+from app.modules.auth.providers.base import AuthProvider
 from app.modules.auth.schemas import TokenPair
 from app.modules.users.repository import UserRepository
 
 
 class AuthService:
-    def __init__(self, repo: UserRepository):
+    def __init__(self, repo: UserRepository, provider: AuthProvider):
         self.repo = repo
+        self.provider = provider
 
-    async def login(self, email: str, password: str) -> TokenPair:
-        user = await self.repo.get_by_email(email)
-        # same message for both cases -> don't reveal which emails exist
-        if not user or not verify_password(password, user.hashed_password):
-            raise UnauthorizedError("Incorrect email or password")
-        if not user.is_active:
-            raise UnauthorizedError("Account is disabled")
+    async def login(self, staff_id: str, password: str) -> TokenPair:
+        user = await self.provider.authenticate(staff_id=staff_id, password=password)
+        if not user or not user.is_active:
+            raise UnauthorizedError("Invalid staff ID or password")
         return self._issue(user.id)
 
     async def refresh(self, refresh_token: str) -> TokenPair:
@@ -30,7 +31,7 @@ class AuthService:
         return self._issue(user.id)
 
     @staticmethod
-    def _issue(user_id) -> TokenPair:
+    def _issue(user_id: uuid.UUID) -> TokenPair:
         return TokenPair(
             access_token=create_token(user_id, "access"),
             refresh_token=create_token(user_id, "refresh"),
