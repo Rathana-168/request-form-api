@@ -2,12 +2,13 @@
 # e.g. from app.modules.users.models import User  # noqa: F401
 from app.db.base import Base  # noqa: F401
 from app.workflow.models import Workflow, WorkflowStep  # noqa: E402,F401
-from app.modules.users.models import Department, Permission, Role, User  # noqa: F401
+from app.modules.users.models import Department, Permission, Role, User, EmployeeProfile  # noqa: F401
 from app.modules.approvals.models import ApprovalTask, ApprovalProxy  # noqa: E402,F401
 from app.modules.notifications.models import Notification  # noqa: E402,F401
 from app.modules.comments.models import RequestComment  # noqa: E402,F401
 from app.events.models import OutboxEvent  # noqa: F40
 from app.modules.attachments.models import Attachment  # noqa: F40
+from app.modules.org.models import Department, Position  # noqa: F40
 
 from app.modules.forms.models import Form  # noqa: F401
 from app.modules.forms.registry import load_plugins

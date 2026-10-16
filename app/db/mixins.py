@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, String, func, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -27,3 +27,11 @@ class TimestampMixin:
 
 class SoftDeleteMixin:
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class HrSyncedMixin:
+    """Columns for tables mirrored from HR. Matched by hr_code, never deleted."""
+    hr_code: Mapped[str | None] = mapped_column(String(50), unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(default=True, server_default=true())
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    
