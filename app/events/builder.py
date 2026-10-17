@@ -19,8 +19,9 @@ def build_event(
     step: dict[str, Any] | None = None,
     comment: str | None = None,
     extra: dict[str, str] | None = None,
+    event_id: uuid.UUID | None = None,
 ) -> OutboxEvent:
-    event_id = uuid.uuid4()
+    event_id = event_id or uuid.uuid4()
     return OutboxEvent(
         id=event_id,
         topic=get_settings().KAFKA_WORKFLOW_TOPIC,

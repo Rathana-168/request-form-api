@@ -5,12 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.events.builder import build_event
-from app.modules.forms.data import load_form_row
+from app.modules.forms.data import load_form_data, load_form_row
 from app.modules.forms.plugin import FormContext
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.service import NotificationService
 from app.modules.requests.models import Request
 from app.modules.users.models import User
+from app.rules.engine import run_rules
 from app.workflow.enums import WorkflowEvent
 
 # event -> FormHooks method name
@@ -50,11 +51,17 @@ async def dispatch(
     )
 
     # 3. Outbox: same transaction, published to Kafka by the relay
+    event_id = uuid.uuid4()
     ids = [u for u in recipients if actor is None or u != actor.id]
     users = list(await db.scalars(
         select(User).where(User.id.in_(ids), User.is_active)
     )) if ids else []
     db.add(build_event(event, request, actor, recipients=users,
-                       step=step, comment=comment, extra=extra))
+                       step=step, comment=comment, extra=extra, event_id=event_id))
 
-    # Later: rules
+    # 4. Rule
+    await run_rules(
+        db, event.value, request, event_id=event_id,
+        step_no=step["step_no"] if step else None, actor=actor,
+        data=await load_form_data(db, request),
+    )

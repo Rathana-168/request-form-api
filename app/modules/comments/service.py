@@ -19,7 +19,7 @@ from app.modules.users.models import User
 from app.shared.schemas import Page
 from app.workflow import engine
 from app.workflow.enums import WorkflowEvent
-from app.workflow.dispatch import dispatch
+from app.workflow.dispatcher import dispatch
 
 OPEN_STATUSES = {RequestStatus.DRAFT, RequestStatus.IN_PROGRESS, RequestStatus.RETURNED}
 

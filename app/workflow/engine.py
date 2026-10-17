@@ -17,9 +17,10 @@ from app.modules.requests.models import (
     RequestStatus,
 )
 from app.modules.users.models import User
+from app.rules.models import WorkflowRule
 from app.workflow.conditions import matches
 from app.workflow.enums import WorkflowEvent
-from app.workflow.dispatch import dispatch
+from app.workflow.dispatcher import dispatch
 from app.workflow.exceptions import ActionNotAllowedError, CommentRequiredError, NoActiveWorkflowError
 from app.workflow.models import Workflow
 from app.workflow.resolvers import resolve_step_users
@@ -61,6 +62,7 @@ async def start(db: AsyncSession, request: Request, actor: User) -> None:
             }
             for s in workflow.steps
         ],
+        "rule": await _snapshot_rule(db, workflow.id)
     }
     await _open_step(db, request, 1, actor)
 
@@ -368,3 +370,16 @@ def _action(key: str, label: str, task_id: uuid.UUID | None = None,
 def _on_behalf_of(task: ApprovalTask, actor: User) -> uuid.UUID | None:
     """The approver a proxy acted for, or None when they acted on their own task."""
     return task.assignee_id if task.assignee_id != actor.id else None
+
+
+async def _snapshot_rule(db: AsyncSession, workflow_id: int) -> list[dict[str, any]]:
+    rules = await db.scalars(
+        select(WorkflowRule)
+        .where(WorkflowRule.workflow_id == workflow_id, WorkflowRule.is_active)
+        .order_by(WorkflowRule.priority, WorkflowRule.created_at)
+    )
+    return [
+        {"id": str(r.id), "name": r.name, "event": r.event, "step_no": r.step_no,
+         "conditions": r.conditions, "actions": r.actions}
+        for r in rules
+    ]

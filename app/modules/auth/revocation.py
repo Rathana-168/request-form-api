@@ -13,6 +13,13 @@ async def revoke(payload: dict) -> None:
     if ttl > 0:
         await get_redis().set(PREFIX + payload["jti"], "1", ex=ttl)
 
+
+async def consume(payload: dict) -> bool:
+    """Mark a refresh token as used. Returns False if it was already used."""
+    ttl = max(int(payload["exp"] - time.time()), 1)
+    return bool(await get_redis().set(f"{PREFIX}{payload['jti']}", 1, nx=True, ex=ttl))
+
+
 async def is_revoked(jti: str) -> bool:
     return await get_redis().exists(PREFIX + jti) == 1
 

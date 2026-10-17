@@ -11,7 +11,7 @@ from app.modules.requests.models import HistoryAction, Request, RequestHistory
 from app.modules.users.models import User
 from app.workflow import engine
 from app.workflow.enums import EscalationAction, WorkflowEvent
-from app.workflow.dispatch import dispatch
+from app.workflow.dispatcher import dispatch
 
 logger = logging.getLogger(__name__)
 BATCH_SIZE = 200

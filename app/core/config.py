@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     AUTH_PROVIDER: str = "local"          # later: "ldap"
     DEFAULT_PASSWORD: str = "admin"       # temporary, until LDAP
 
+    # Rule Engine
+    RULE_HTTP_ALLOWED_HOSTS: list[str] = []
+    RULE_ACTIONS_POLL_SECONDS: int = 10
+    RULE_ACTIONS_BATCH_SIZE: int = 20
+    RULE_ACTION_MAX_ATTEMPTS: int = 5
+    RULE_ACTION_LEASE_SECONDS: int = 300   # how long a claimed row is hidden from other runs
+
     # Database
     DATABASE_URL: str
     DATABASE_SCHEMA: str = "public"

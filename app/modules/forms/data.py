@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,3 +19,8 @@ async def load_form_row(
         select(definition.model).where(definition.model.request_id == request.id)
     )
     return definition, row
+
+
+async def load_form_data(db: AsyncSession, request: Request) -> dict[str, Any]:
+    definition, row = await load_form_row(db, request)
+    return definition.read_schema.model_validate(row).model_dump()
