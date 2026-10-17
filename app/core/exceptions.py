@@ -31,6 +31,11 @@ class PermissionDeniedError(AppException):
 class UnauthorizedError(AppException):
     status_code = status.HTTP_401_UNAUTHORIZED
     code = "UNAUTHORIZED"
+    
+
+class UnprocessableError(AppException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "UNPROCESSABLE"
 
 
 def register_exception_handlers(app: FastAPI) -> None:

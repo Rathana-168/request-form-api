@@ -19,7 +19,7 @@ class AuthService:
         user = await self.provider.authenticate(staff_id=staff_id, password=password)
         if not user or not user.is_active:
             raise UnauthorizedError("Invalid staff ID or password")
-        return self._issue(user.id, user.staff_id)
+        return self._issue(user.id)
 
     async def refresh(self, refresh_token: str) -> TokenPair:
         try:
@@ -37,13 +37,13 @@ class AuthService:
             await revoke_session(payload["sid"])
             raise UnauthorizedError("Refresh token already used")
 
-        return self._issue(user.id, user.staff_id, sid=payload["sid"])
+        return self._issue(user.id, sid=payload["sid"])
 
     async def logout(self, sid: str) -> None:
         await revoke_session(sid)
 
     @staticmethod
-    def _issue(user_id: uuid.UUID, sid: str) -> TokenPair:
+    def _issue(user_id: uuid.UUID, sid: str | None = None) -> TokenPair:
         sid = sid or str(uuid.uuid4())
         return TokenPair(
             access_token=create_token(user_id, "access", sid),

@@ -10,7 +10,7 @@ from app.rules.context import ActionContext, render
 from app.rules.enums import ExecutionStatus
 from app.rules.models import RuleExecution
 from app.rules.registry import ActionError, get_action
-from app.workflow.conditions import evaluate              # your existing evaluator
+from app.workflow.conditions import matches              # your existing evaluator
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ async def run_rules(
     variables = ctx.template_vars
 
     for rule in rules:
-        if rule.get("conditions") and not evaluate(rule["conditions"], data):
+        if rule.get("conditions") and not matches(rule["conditions"], data):
             continue
 
         for i, action in enumerate(rule["actions"]):

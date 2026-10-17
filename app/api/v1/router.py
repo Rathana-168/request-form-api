@@ -11,6 +11,7 @@ from app.modules.notifications.router import router as notifications_router
 from app.modules.comments.router import router as comments_router
 from app.modules.attachments.router import router as attachments_router
 from app.workflow.router import router as workflows_router
+from app.rules.router import router as rules_router
 
 
 api_router = APIRouter()
@@ -22,6 +23,7 @@ api_router.include_router(approvals_router, prefix="/approvals", tags=["approval
 api_router.include_router(workflows_router, prefix="/workflows", tags=["workflows"])
 api_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(attachments_router, prefix="/attachments", tags=["attachments"])
+api_router.include_router(rules_router, tags=["rules"])
 
 
 @api_router.get("/health", tags=["health"])

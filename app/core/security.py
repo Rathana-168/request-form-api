@@ -41,7 +41,12 @@ def create_token(user_id: uuid.UUID, token_type: TokenType, sid: str) -> str:
 
 def decode_payload(token: str, expected_type: TokenType) -> dict:
     """Return the full payload, or raise jwt.InvalidTokenError."""
-    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    payload = jwt.decode(
+        token, 
+        settings.SECRET_KEY, 
+        algorithms=[settings.JWT_ALGORITHM],
+        options={"require": ["exp", "iat", "sub", "type", "sid", "jti"]}
+    )
     if payload.get("type") != expected_type:
         raise jwt.InvalidTokenError("Wrong token type")
     return payload
