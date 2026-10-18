@@ -13,6 +13,7 @@ from app.core.security import decode_payload
 from app.db.session import get_db
 from app.modules.auth.revocation import is_session_revoked
 from app.modules.users.models import Role, User
+from app.core.context import current_user_id
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
@@ -45,6 +46,7 @@ async def get_current_user(db: DbSession, payload: TokenPayload) -> User:
     )
     if not user or not user.is_active:
         raise UnauthorizedError("User inactive or not found")
+    current_user_id.set(user.id)
     return user
 
 
