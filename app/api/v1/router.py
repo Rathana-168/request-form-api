@@ -1,7 +1,4 @@
 from fastapi import APIRouter
-from sqlalchemy import text
-
-from app.api.deps import DbSession
 
 from app.modules.auth.router import router as auth_router
 from app.modules.users.router import router as users_router
@@ -25,12 +22,6 @@ api_router.include_router(notifications_router, prefix="/notifications", tags=["
 api_router.include_router(attachments_router, prefix="/attachments", tags=["attachments"])
 api_router.include_router(rules_router, tags=["rules"])
 
-
-@api_router.get("/health", tags=["health"])
-async def health(db: DbSession):
-    from app.integrations.redis import ping_redis
-    await db.execute(text("SELECT 1"))
-    return {"status": "ok", "redis": await ping_redis()}
 
 # Register form router will scallable as form increase
 from app.modules.forms.registry import load_plugins
