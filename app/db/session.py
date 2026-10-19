@@ -20,7 +20,9 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
-    pool_pre_ping=True,
+    pool_pre_ping=True,     # drop dead connections (after DB restart / network blip)
+    pool_recycle=1800,      # renew connections every 30 min
+    pool_timeout=10,        # fail fast instead of hanging when pool is full
     **_engine_options()
 )
 

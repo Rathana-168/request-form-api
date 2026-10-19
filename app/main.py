@@ -27,7 +27,16 @@ async def lifespan(_: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
+    is_prod = settings.ENV == "production"
+
+    app = FastAPI(
+        title=settings.APP_NAME, 
+        debug=settings.DEBUG, 
+        lifespan=lifespan,
+        docs_url=None if is_prod else "/docs",
+        redoc_url=None if is_prod else "/redoc",
+        openapi_url=None if is_prod else "/openapi.json",
+    )
 
     app.add_middleware(
         CORSMiddleware,
