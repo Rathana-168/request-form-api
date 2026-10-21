@@ -62,7 +62,7 @@ async def start(db: AsyncSession, request: Request, actor: User) -> None:
             }
             for s in workflow.steps
         ],
-        "rule": await _snapshot_rule(db, workflow.id)
+        "rules": await _snapshot_rules(db, workflow.id)
     }
     await _open_step(db, request, 1, actor)
 
@@ -372,7 +372,7 @@ def _on_behalf_of(task: ApprovalTask, actor: User) -> uuid.UUID | None:
     return task.assignee_id if task.assignee_id != actor.id else None
 
 
-async def _snapshot_rule(db: AsyncSession, workflow_id: int) -> list[dict[str, any]]:
+async def _snapshot_rules(db: AsyncSession, workflow_id: uuid.UUID) -> list[dict[str, Any]]:
     rules = await db.scalars(
         select(WorkflowRule)
         .where(WorkflowRule.workflow_id == workflow_id, WorkflowRule.is_active)

@@ -9,7 +9,6 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import NotFoundError, UnprocessableError
 from app.modules.forms.data import load_form_data
 from app.modules.requests.models import Request
-from app.modules.users.models import User
 from app.rules.context import ActionContext, render
 from app.rules.models import WorkflowRule
 from app.rules.registry import get_action, validate_actions
@@ -104,7 +103,7 @@ class RuleService:
             return RuleTestOut(matched=False)
 
         ctx = ActionContext(
-            db=self.db, request=request, requester=await self.db.get(User, request.requester_id),
+            db=self.db, request=request,
             data=data, event=rule.event, step_no=rule.step_no, actor=None,
         )
         previews = []

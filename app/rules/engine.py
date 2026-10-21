@@ -29,8 +29,8 @@ async def run_rules(
         return
 
     ctx = ActionContext(
-        db=db, request=request, requester=await db.get(User, request.requester_id),
-        data=data, event=event, step_no=step_no, actor=actor,
+        db=db, request=request, data=data, 
+        event=event, step_no=step_no, actor=actor,
     )
     variables = ctx.template_vars
 
