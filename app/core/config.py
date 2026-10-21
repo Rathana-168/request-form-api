@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     REVOCATION_FAIL_OPEN: bool = False
 
     # JWT
-    JWT_SECRET: str = "kajlxjsidfjw8essfdew3esd"
+    JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -90,6 +90,25 @@ class Settings(BaseSettings):
     ATTACHMENT_CLEANUP_CRON: str = "0 3 * * *"   # daily 03:00
     ATTACHMENT_UNUSED_HOURS: int = 24
     ATTACHMENT_USE_REQUEST_ID: bool = True 
+    
+    @model_validator(mode="after")
+    def _check_production(self):
+        if self.ENV != "production":
+            return self
+
+        problems = []
+        if len(self.JWT_SECRET) < 32:
+            problems.append("JWT_SECRET must be at least 32 characters")
+        if self.AUTH_PROVIDER != "ldap":
+            problems.append("AUTH_PROVIDER must be 'ldap' (local login is for testing only)")
+        if not self.CORS_ORIGINS or "*" in self.CORS_ORIGINS:
+            problems.append("CORS_ORIGINS must list the allowed frontend URLs (no '*')")
+        if self.DEBUG:
+            problems.append("DEBUG must be false")
+
+        if problems:
+            raise ValueError("Unsafe production settings: " + "; ".join(problems))
+        return self
 
 
 @lru_cache
