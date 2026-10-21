@@ -19,12 +19,15 @@ from app.modules.requests.models import (
 from app.modules.users.models import User
 from app.rules.models import WorkflowRule
 from app.workflow.conditions import matches
-from app.workflow.enums import WorkflowEvent
 from app.workflow.dispatcher import dispatch
-from app.workflow.exceptions import ActionNotAllowedError, CommentRequiredError, NoActiveWorkflowError
+from app.workflow.enums import WorkflowEvent
+from app.workflow.exceptions import (
+    ActionNotAllowedError,
+    CommentRequiredError,
+    NoActiveWorkflowError,
+)
 from app.workflow.models import Workflow
 from app.workflow.resolvers import resolve_step_users
-
 
 STEP_FIELDS = (
     "step_no", "name", "status", "action_label", "assignee_type", "assignee_field", "mode",

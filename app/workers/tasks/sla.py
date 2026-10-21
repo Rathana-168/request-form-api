@@ -5,9 +5,9 @@ from datetime import UTC, datetime
 from celery import shared_task
 
 from app.core.config import get_settings
-from app.workflow import sla
-from app.workers.schedules import cron
 from app.db.session import task_sessions
+from app.workers.schedules import cron
+from app.workflow import sla
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,6 @@ from app.rules.enums import ExecutionStatus
 from app.rules.models import RuleExecution
 from app.rules.registry import get_action
 
-
 logger = get_logger(__name__)
 
 

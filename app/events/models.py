@@ -1,8 +1,16 @@
-import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, Identity, Index, Integer, String, Text, text
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Identity,
+    Index,
+    Integer,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 

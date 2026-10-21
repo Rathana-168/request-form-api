@@ -1,15 +1,18 @@
 import uuid
+from collections.abc import Set as AbstractSet
 
 from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from collections.abc import Set as AbstractSet
 
 from app.core.config import get_settings
 from app.integrations.file_service.client import FileRejectedError
 from app.integrations.registry import file_service
 from app.modules.attachments.exceptions import (
-    AttachmentNotFoundError, FileTooLargeError, InvalidAttachmentError, InvalidUploadError,
+    AttachmentNotFoundError,
+    FileTooLargeError,
+    InvalidAttachmentError,
+    InvalidUploadError,
 )
 from app.modules.attachments.models import Attachment
 from app.modules.attachments.schemas import DownloadOut

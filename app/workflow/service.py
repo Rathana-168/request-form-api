@@ -8,7 +8,6 @@ from app.core.exceptions import NotFoundError
 from app.modules.forms.exceptions import FormNotFoundError
 from app.modules.forms.registry import get_definition
 from app.modules.forms.repository import FormRepository
-from app.modules.users.models import Role, User
 from app.workflow.conditions import rule_fields
 from app.workflow.models import Workflow, WorkflowStep
 from app.workflow.schemas import StepIn, WorkflowCreate, WorkflowUpdate

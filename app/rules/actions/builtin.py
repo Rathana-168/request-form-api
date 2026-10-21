@@ -1,6 +1,6 @@
+import uuid
 from typing import Any, Literal
 from urllib.parse import urlparse
-import uuid
 
 import httpx
 from pydantic import BaseModel, HttpUrl, model_validator
@@ -61,7 +61,7 @@ class HttpCallParams(BaseModel):
     def _allowed_host(self):
         allowed = get_settings().RULE_HTTP_ALLOWED_HOSTS
         if urlparse(str(self.url)).hostname not in allowed:
-            raise ValueError(f"host is not in RULE_HTTP_ALLOWED_HOSTS")
+            raise ValueError("host is not in RULE_HTTP_ALLOWED_HOSTS")
         return self
 
 

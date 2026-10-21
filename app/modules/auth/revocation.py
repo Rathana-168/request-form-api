@@ -3,7 +3,6 @@ import time
 from app.core.config import get_settings
 from app.integrations.redis import get_redis
 
-
 PREFIX = "auth:revoked:"
 SESSION_PREFIX = "auth:session-revoked:"
 

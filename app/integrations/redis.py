@@ -6,7 +6,6 @@ from redis.retry import Retry
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
-
 log = get_logger(__name__)
 
 _client: Redis | None = None

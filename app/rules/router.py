@@ -6,8 +6,14 @@ from fastapi import APIRouter, Depends, status
 from app.api.deps import DbSession, require_permission
 from app.modules.users.models import User
 from app.rules.registry import list_actions
-from app.rules.schemas import (ActionTypeOut, RuleCreate, RuleOut, RuleTestIn,
-                               RuleTestOut, RuleUpdate)
+from app.rules.schemas import (
+    ActionTypeOut,
+    RuleCreate,
+    RuleOut,
+    RuleTestIn,
+    RuleTestOut,
+    RuleUpdate,
+)
 from app.rules.service import RuleService
 from app.shared.schemas import APIResponse, ok
 

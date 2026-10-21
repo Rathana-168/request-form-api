@@ -7,11 +7,11 @@ from app.modules.forms.exceptions import (
     UnknownFormError,
 )
 from app.modules.forms.models import Form
+from app.modules.forms.registry import load_plugins
 from app.modules.forms.repository import FormRepository
 from app.modules.forms.schemas import FormCreate, FormUpdate
 from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
-from app.modules.forms.registry import load_plugins
 
 
 class FormService:

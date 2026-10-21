@@ -1,5 +1,5 @@
-from datetime import date, datetime
 import uuid
+from datetime import date, datetime
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -56,8 +56,8 @@ class Department(UUIDMixin, TimestampMixin, Base):
         ForeignKey("users.id", ondelete="SET NULL", use_alter=True)
     )
 
-    parent: Mapped["Department | None"] = relationship(remote_side="Department.id")
-    head: Mapped["User | None"] = relationship(foreign_keys=[head_id])
+    parent: Mapped[Department | None] = relationship(remote_side="Department.id")
+    head: Mapped[User | None] = relationship(foreign_keys=[head_id])
 
 
 class User(UUIDMixin, TimestampMixin, Base):
@@ -80,10 +80,10 @@ class User(UUIDMixin, TimestampMixin, Base):
     department: Mapped[Department | None] = relationship(
         foreign_keys=[department_id], lazy="joined"
     )
-    manager: Mapped["User | None"] = relationship(remote_side="User.id")
+    manager: Mapped[User | None] = relationship(remote_side="User.id")
     roles: Mapped[list[Role]] = relationship(secondary=user_roles, lazy="raise")
 
-    profile: Mapped["EmployeeProfile | None"] = relationship(
+    profile: Mapped[EmployeeProfile | None] = relationship(
         back_populates="user", uselist=False, lazy="raise"
     )
     
@@ -112,4 +112,4 @@ class EmployeeProfile(Base):
     hr_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    user: Mapped["User"] = relationship(back_populates="profile")
+    user: Mapped[User] = relationship(back_populates="profile")

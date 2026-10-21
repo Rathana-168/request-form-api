@@ -4,8 +4,11 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.users.models import Role, User
-from app.modules.users.models import Department  # add to imports
+from app.modules.users.models import (
+    Department,  # add to imports
+    Role,
+    User,
+)
 
 
 class UserRepository:

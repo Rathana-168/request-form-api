@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.approvals.repository import ApprovalRepository
 from app.modules.attachments.service import AttachmentService
 from app.modules.comments.exceptions import (
-    CommentNotFoundError, CommentsClosedError, NotCommentAuthorError,
+    CommentNotFoundError,
+    CommentsClosedError,
+    NotCommentAuthorError,
 )
 from app.modules.comments.models import RequestComment
 from app.modules.comments.repository import CommentRepository
@@ -18,8 +20,8 @@ from app.modules.requests.models import Request, RequestStatus
 from app.modules.users.models import User
 from app.shared.schemas import Page
 from app.workflow import engine
-from app.workflow.enums import WorkflowEvent
 from app.workflow.dispatcher import dispatch
+from app.workflow.enums import WorkflowEvent
 
 OPEN_STATUSES = {RequestStatus.DRAFT, RequestStatus.IN_PROGRESS, RequestStatus.RETURNED}
 

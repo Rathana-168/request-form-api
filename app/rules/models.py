@@ -1,8 +1,17 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import (Boolean, ForeignKey, Index, Integer, String, Text,
-                        UniqueConstraint, func, text)
+from sqlalchemy import (
+    Boolean,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 

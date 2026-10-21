@@ -1,6 +1,6 @@
-from datetime import UTC, datetime
 import uuid
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +14,8 @@ from app.modules.requests.repository import RequestRepository
 from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
 from app.workflow import engine
-from app.workflow.enums import WorkflowEvent
 from app.workflow.dispatcher import dispatch
+from app.workflow.enums import WorkflowEvent
 
 Action = Callable[[AsyncSession, Request, ApprovalTask, User, str | None], Awaitable[None]]
 VERBS = {"approve": "approved", "reject": "rejected", "return": "returned"}

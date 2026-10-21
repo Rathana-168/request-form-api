@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 async def load_form_row(
-    db: AsyncSession, request: "Request"
+    db: AsyncSession, request: Request
 ) -> tuple[FormDefinition, FormDataMixin | None]:
     """The form's definition and its data row for this request."""
     definition = get_definition(request.form_code)

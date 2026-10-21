@@ -14,7 +14,7 @@ class PurchaseRequestData(FormDataMixin, Base):
 
     supplier: Mapped[str] = mapped_column(String(150))
     total: Mapped[Decimal] = mapped_column(Numeric(14, 2))  # computed in hooks.build
-    items: Mapped[list["PurchaseItem"]] = relationship(
+    items: Mapped[list[PurchaseItem]] = relationship(
         cascade="all, delete-orphan", lazy="raise", order_by="PurchaseItem.line_no"
     )
     approver_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))

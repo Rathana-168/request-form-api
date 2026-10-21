@@ -1,6 +1,6 @@
-from typing import Any
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from app.core.config import get_settings
 from app.events.models import OutboxEvent

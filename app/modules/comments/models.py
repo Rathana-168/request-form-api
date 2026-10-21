@@ -9,7 +9,6 @@ from app.db.mixins import TimestampMixin, UUIDMixin
 from app.modules.attachments.models import Attachment
 from app.modules.users.models import User
 
-
 comment_attachments = Table(
     "request_comment_attachments", Base.metadata,
     Column("comment_id", ForeignKey("request_comments.id", ondelete="CASCADE"), primary_key=True),

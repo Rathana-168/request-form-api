@@ -8,12 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.context import current_user_id
 from app.core.exceptions import PermissionDeniedError, UnauthorizedError
 from app.core.security import decode_payload
 from app.db.session import get_db
 from app.modules.auth.revocation import is_session_revoked
 from app.modules.users.models import Role, User
-from app.core.context import current_user_id
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 

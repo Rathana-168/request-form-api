@@ -8,7 +8,6 @@ from app.core.logging import get_logger
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
 
-
 logger = get_logger(__name__)
 
 class LdapAuthProvider:

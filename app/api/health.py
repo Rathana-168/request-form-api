@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.logging import get_logger
-from app.db.session import engine           # your async engine
+from app.db.session import engine  # your async engine
 from app.integrations.redis import ping_redis
 
 log = get_logger(__name__)

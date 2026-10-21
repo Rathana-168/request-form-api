@@ -7,7 +7,7 @@ from app.api.deps import CurrentUser, DbSession
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.schemas import NotificationOut, UnreadCountOut
 from app.modules.notifications.service import NotificationService
-from app.shared.schemas import Page, PageParams, APIResponse, ok
+from app.shared.schemas import APIResponse, Page, PageParams, ok
 
 router = APIRouter()
 

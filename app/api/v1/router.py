@@ -1,15 +1,14 @@
 from fastapi import APIRouter
 
-from app.modules.auth.router import router as auth_router
-from app.modules.users.router import router as users_router
-from app.modules.requests.router import router as requests_router
 from app.modules.approvals.router import router as approvals_router
-from app.modules.notifications.router import router as notifications_router
-from app.modules.comments.router import router as comments_router
 from app.modules.attachments.router import router as attachments_router
-from app.workflow.router import router as workflows_router
+from app.modules.auth.router import router as auth_router
+from app.modules.comments.router import router as comments_router
+from app.modules.notifications.router import router as notifications_router
+from app.modules.requests.router import router as requests_router
+from app.modules.users.router import router as users_router
 from app.rules.router import router as rules_router
-
+from app.workflow.router import router as workflows_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])

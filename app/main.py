@@ -3,17 +3,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.rules.actions  # noqa: F401
-
+import app.rules.actions
+from app.api.health import router as health_router
+from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
-from app.api.v1.router import api_router
-from app.api.health import router as health_router
 from app.db import query_counter
 from app.db.session import engine
-from app.integrations.registry import close_all_client_services
 from app.integrations.redis import close_redis
+from app.integrations.registry import close_all_client_services
 
 
 @asynccontextmanager

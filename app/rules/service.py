@@ -12,7 +12,13 @@ from app.modules.requests.models import Request
 from app.rules.context import ActionContext, render
 from app.rules.models import WorkflowRule
 from app.rules.registry import get_action, validate_actions
-from app.rules.schemas import ActionPreview, RuleCreate, RuleTestIn, RuleTestOut, RuleUpdate
+from app.rules.schemas import (
+    ActionPreview,
+    RuleCreate,
+    RuleTestIn,
+    RuleTestOut,
+    RuleUpdate,
+)
 from app.workflow.conditions import matches
 from app.workflow.models import Workflow
 

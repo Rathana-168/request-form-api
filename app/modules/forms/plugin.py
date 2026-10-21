@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy import ForeignKey, inspect as sa_inspect
+from sqlalchemy import ForeignKey
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -72,9 +73,9 @@ class FormContext:
     """What a hook receives. Hooks run inside the caller's transaction."""
 
     db: AsyncSession
-    request: "Request"
-    user: "User"
-    definition: "FormDefinition"
+    request: Request
+    user: User
+    definition: FormDefinition
 
 
 class FormHooks:

@@ -10,7 +10,6 @@ from app.modules.auth.service import AuthService
 from app.modules.users.repository import UserRepository
 from app.modules.users.schemas import UserOut
 
-
 router = APIRouter()
 
 

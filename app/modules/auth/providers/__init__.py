@@ -1,6 +1,7 @@
 from app.core.config import get_settings
 from app.modules.auth.providers.ldap import LdapAuthProvider
 from app.modules.users.repository import UserRepository
+
 from .base import AuthProvider
 from .local import LocalAuthProvider
 

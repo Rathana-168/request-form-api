@@ -1,5 +1,5 @@
-from typing import BinaryIO
 import uuid
+from typing import BinaryIO
 
 from app.integrations.base import BaseServiceClient
 from app.integrations.file_service.schemas import FileInfo

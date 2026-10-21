@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.approvals.repository import ApprovalProxyRepository, ApprovalRepository
 from app.modules.attachments.models import Attachment
 from app.modules.attachments.repository import AttachmentRepository
 from app.modules.comments.repository import CommentRepository
@@ -31,7 +32,6 @@ from app.modules.requests.schemas import RequestCreate, RequestUpdate
 from app.modules.users.models import User
 from app.shared.schemas import Page, PageParams
 from app.workflow import engine
-from app.modules.approvals.repository import ApprovalProxyRepository, ApprovalRepository
 
 CANCELLABLE = {RequestStatus.IN_PROGRESS, RequestStatus.RETURNED}
 

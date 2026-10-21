@@ -5,8 +5,8 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.shared.schemas import ORMModel
-from app.workflow.models import ApprovalMode, AssigneeType
 from app.workflow.enums import EscalationAction
+from app.workflow.models import ApprovalMode, AssigneeType
 
 Op = Literal["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in"]
 Action = Literal["reject", "return"]
@@ -30,8 +30,8 @@ class ConditionGroup(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    all_: list["Condition | ConditionGroup"] | None = Field(None, alias="all", min_length=1)
-    any_: list["Condition | ConditionGroup"] | None = Field(None, alias="any", min_length=1)
+    all_: list[Condition | ConditionGroup] | None = Field(None, alias="all", min_length=1)
+    any_: list[Condition | ConditionGroup] | None = Field(None, alias="any", min_length=1)
 
     @model_validator(mode="after")
     def exactly_one(self):

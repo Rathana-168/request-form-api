@@ -2,7 +2,17 @@ import uuid
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text, true
+from sqlalchemy import (
+    Boolean,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+    true,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,6 +20,7 @@ from app.db.base import Base
 from app.db.mixins import TimestampMixin, UUIDMixin
 from app.db.types import str_enum
 from app.workflow.enums import EscalationAction
+
 
 class AssigneeType(StrEnum):
     USER = "user"  # one specific user (assignee_user_id)
@@ -44,7 +55,7 @@ class Workflow(UUIDMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    steps: Mapped[list["WorkflowStep"]] = relationship(
+    steps: Mapped[list[WorkflowStep]] = relationship(
         cascade="all, delete-orphan", lazy="selectin", order_by="WorkflowStep.step_no"
     )
     completed_status: Mapped[str] = mapped_column(

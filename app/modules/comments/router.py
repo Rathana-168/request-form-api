@@ -6,8 +6,7 @@ from fastapi import APIRouter, Depends, status
 from app.api.deps import CurrentUser, DbSession
 from app.modules.comments.schemas import CommentCreate, CommentOut, CommentUpdate
 from app.modules.comments.service import CommentService
-from app.shared.schemas import APIResponse, ok
-from app.shared.schemas import Page, PageParams
+from app.shared.schemas import APIResponse, Page, PageParams, ok
 
 router = APIRouter()
 

@@ -11,7 +11,7 @@ class AttachmentId(uuid.UUID):
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source: Any, handler: GetCoreSchemaHandler):
-        def to_id(v: Any) -> "AttachmentId":
+        def to_id(v: Any) -> AttachmentId:
             if isinstance(v, dict):
                 v = v.get("id")
             elif hasattr(v, "id") and not isinstance(v, (str, uuid.UUID)):

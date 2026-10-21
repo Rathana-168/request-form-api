@@ -10,8 +10,8 @@ from app.modules.approvals.models import ApprovalTask, TaskStatus
 from app.modules.requests.models import HistoryAction, Request, RequestHistory
 from app.modules.users.models import User
 from app.workflow import engine
-from app.workflow.enums import EscalationAction, WorkflowEvent
 from app.workflow.dispatcher import dispatch
+from app.workflow.enums import EscalationAction, WorkflowEvent
 
 logger = logging.getLogger(__name__)
 BATCH_SIZE = 200
