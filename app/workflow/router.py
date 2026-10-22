@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import DbSession, require_permission
 from app.modules.users.models import User
+from app.shared.schemas import APIResponse, ok
+from app.workflow.models import AssigneeType
 from app.workflow.schemas import WorkflowCreate, WorkflowOut, WorkflowUpdate
 from app.workflow.service import WorkflowService
 
@@ -51,3 +53,8 @@ async def activate_workflow(workflow_id: uuid.UUID, _: Manager, svc: WorkflowSvc
 @router.post("/{workflow_id}/deactivate", response_model=WorkflowOut)
 async def deactivate_workflow(workflow_id: uuid.UUID, _: Manager, svc: WorkflowSvc):
     return await svc.deactivate(workflow_id)
+
+
+@router.get("/remote/assignee-types", response_model=APIResponse[list[AssigneeType]])
+async def assignee_types():
+    return ok([t.value for t in AssigneeType])
