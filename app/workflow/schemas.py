@@ -138,3 +138,11 @@ class WorkflowOut(ORMModel):
     created_at: datetime
     updated_at: datetime
     
+    
+class AssigneeTypeOut(BaseModel):
+    value: AssigneeType
+    label: str
+    description: str
+    needs: Literal["user", "role", "field"] | None  # extra input the step requires
+    supported: bool  # False = resolvers.py can't find an approver for it yet
+    

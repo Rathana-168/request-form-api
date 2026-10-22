@@ -9,8 +9,8 @@ from app.modules.forms.exceptions import FormNotFoundError
 from app.modules.forms.registry import get_definition
 from app.modules.forms.repository import FormRepository
 from app.workflow.conditions import rule_fields
-from app.workflow.models import Workflow, WorkflowStep
-from app.workflow.schemas import StepIn, WorkflowCreate, WorkflowUpdate
+from app.workflow.models import AssigneeType, Workflow, WorkflowStep
+from app.workflow.schemas import AssigneeTypeOut, StepIn, WorkflowCreate, WorkflowUpdate
 
 
 class WorkflowNotFoundError(NotFoundError):
@@ -85,6 +85,20 @@ class WorkflowService:
         workflow.is_active = False
         await self.db.flush()
         return await self._reload(workflow)
+    
+    @staticmethod
+    def remote_assignee_types() -> list[AssigneeTypeOut]:
+        ASSIGNEE_TYPE_INFO = {
+            AssigneeType.USER: ("Specific user", "One named person.", "user", True),
+            AssigneeType.ROLE: ("Everyone with a role", "All active users who have the chosen role.", "role", True),
+            AssigneeType.REQUESTER_MANAGER: ("Requester's manager", "The requester's manager.", None, False),
+            AssigneeType.DEPARTMENT_HEAD: ("Department head", "The head of the requester's department.", None, False),
+            AssigneeType.FORM_FIELD: ("User from a form field", "A user ID taken from the request's form data.", "field", True),
+        }
+        return [
+            AssigneeTypeOut(value=t, label=label, description=desc, needs=needs, supported=supported)
+            for t, (label, desc, needs, supported) in ASSIGNEE_TYPE_INFO.items()
+        ]
 
     # --- helpers ---
 
