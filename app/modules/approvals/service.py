@@ -30,7 +30,7 @@ class ApprovalService:
 
     async def inbox(self, user: User, params: PageParams, form_code: str | None) -> Page:
         acting_ids = [user.id, *(await self.proxies.principals_of(user.id, datetime.now(UTC)))]
-        rows, total = await self.repo. inbox(
+        rows, total = await self.repo.inbox(
             user.id, 
             offset=params.offset, 
             limit=params.size, 

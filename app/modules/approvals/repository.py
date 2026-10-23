@@ -29,12 +29,10 @@ class ApprovalRepository:
             .join(Request, Request.id == ApprovalTask.request_id)
             .where(
                 ApprovalTask.status == TaskStatus.PENDING,
-                # as a proxy, never show your own request
-                or_(ApprovalTask.assignee_id == user_id, Request.requester_id != user_id),
+                ApprovalTask.assignee_id.in_(acting_ids)
             )
         )
         if len(acting_ids) > 1:  # acting as a proxy for someone
-            # never show the proxy their own request through someone else's task
             stmt = stmt.where(
                 or_(ApprovalTask.assignee_id == user_id, Request.requester_id != user_id)
             )
