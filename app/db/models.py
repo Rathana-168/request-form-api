@@ -21,5 +21,6 @@ from app.modules.users.models import (  # noqa: F401
 )
 from app.rules.models import RuleExecution, WorkflowRule  # noqa: F401
 from app.workflow.models import Workflow, WorkflowStep  # noqa: F401
+from app.events.models import OutboxEvent  # noqa: F401
 
 load_plugins()  # registers every form plugin's table
