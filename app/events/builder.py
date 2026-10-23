@@ -7,6 +7,7 @@ from app.events.models import OutboxEvent
 from app.modules.requests.models import Request
 from app.modules.users.models import User
 from app.workflow.enums import WorkflowEvent
+from app.core.context import trace_id_var
 
 
 def _contact(u: User) -> dict[str, Any]:
@@ -48,4 +49,5 @@ def build_event(
             "comment": comment,
             "extra": extra or {},
         },
+        trace_id=trace_id_var.get()
     )

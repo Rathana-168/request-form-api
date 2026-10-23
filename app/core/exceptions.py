@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
+from app.core.context import TRACE_HEADER
 from app.integrations.base import ServiceUnavailableError
 from app.shared.schemas import APIResponse
 
@@ -47,8 +48,20 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(ServiceUnavailableError)
-    async def service_unavailable_handler(_: Request, exc: ServiceUnavailableError):
+    async def service_unavailable_handler(request: Request, exc: ServiceUnavailableError):
+        tid = _get_trace_id(request)
         return JSONResponse(
             status_code=503,
-            content=APIResponse(success=False, message=f"{exc.service} is unavailable").model_dump(),
+            content=APIResponse(success=False, message=f"{exc.service} is unavailable", trace_id=tid).model_dump(),
         )
+
+    @app.exception_handler(Exception)
+    async def unhandled_error(request: Request, exc: Exception) -> JSONResponse:
+        tid = _get_trace_id(request)
+        body = APIResponse(status_code=500, message="Internal server error", trace_id=tid)
+        return JSONResponse(body.model_dump(), status_code=500,
+                            headers={TRACE_HEADER: tid} if tid else None)
+
+
+def _get_trace_id(request: Request) -> str | None:
+    return getattr(request.state, "trace_id", None)

@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.context import TRACE_HEADER
 import app.rules.actions
 from app.api.health import router as health_router
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
+from app.core.middleware import TraceIdMiddleware
 from app.db import query_counter
 from app.db.session import engine
 from app.integrations.redis import close_redis
@@ -42,8 +44,11 @@ def create_app() -> FastAPI:
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"],
+        allow_headers=["*"], 
+        expose_headers=[TRACE_HEADER]
     )
+    app.add_middleware(TraceIdMiddleware)
+    
     register_exception_handlers(app)
     app.include_router(health_router)
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)

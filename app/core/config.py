@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -29,6 +30,11 @@ class Settings(BaseSettings):
     APP_TIMEZONE: str = "Asia/Phnom_Penh"
     MAX_UPLOAD_MB: int = 10
 
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: Literal["text", "json"] = "text"
+
+    # Login
     AUTH_PROVIDER: str = "local"          # later: "ldap"
     DEFAULT_PASSWORD: str = "admin"       # temporary, until LDAP
 

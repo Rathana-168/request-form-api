@@ -1,6 +1,7 @@
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.core.context import trace_id_var
 
 
 class ORMModel(BaseModel):
@@ -31,6 +32,7 @@ class APIResponse[T](BaseModel):
     success: bool = True
     message: str | None = "success"
     result: T | None = None
+    trace_id: str | None = Field(default_factory=trace_id_var.get)
 
 
 def ok[T](data: T, message: str = "success") -> APIResponse[T]:

@@ -39,3 +39,5 @@ class OutboxEvent(UUIDMixin, TimestampMixin, Base):
     attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     last_error: Mapped[str | None] = mapped_column(Text)
     seq: Mapped[int] = mapped_column(BigInteger, Identity(), unique=True)
+    trace_id: Mapped[str | None] = mapped_column(String(64))
+    
